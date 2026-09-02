@@ -163,6 +163,29 @@ tbody tr.isnew{background:#fffaf3}
 #toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);background:#16262c;color:#fff;border-radius:10px;
   padding:11px 17px;font-size:.87rem;z-index:200;max-width:88vw;box-shadow:0 6px 20px rgba(0,0,0,.2)}
 .optbar{background:#f4f1fa;border:1px dashed #c4b6de;color:#5b4a86;border-radius:9px;padding:9px 12px;font-size:.83rem;margin-bottom:12px;font-weight:600}
+/* 광고 피드 */
+.feed{background:#f2f4f5;border-radius:16px;padding:12px}
+.feed .fh{display:flex;align-items:center;gap:7px;font-size:.82rem;color:var(--ink-3);padding:2px 4px 10px}
+.ad{background:#fff;border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-bottom:11px;text-align:left;width:100%;padding:0;display:block}
+.ad:hover{border-color:var(--brand-line)}
+.ad .adtop{display:flex;align-items:center;gap:8px;padding:9px 11px;font-size:.8rem}
+.ad .avatar{width:26px;height:26px;border-radius:50%;background:var(--brand-soft);color:var(--brand);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.75rem}
+.ad .spon{margin-left:auto;color:var(--ink-3);font-size:.72rem}
+.ad .adimg{height:112px;display:flex;align-items:center;justify-content:center;font-size:.92rem;font-weight:800;color:#fff;text-align:center;padding:0 16px;line-height:1.45}
+.ad .adbody{padding:10px 11px 12px}
+.ad .adbody b{display:block;font-size:.92rem;margin-bottom:3px;color:var(--ink)}
+.ad .adbody span{font-size:.83rem;color:var(--ink-2)}
+.ad .cta{display:inline-block;margin-top:8px;background:var(--brand-soft);color:var(--brand-2);border-radius:7px;padding:5px 12px;font-size:.8rem;font-weight:700}
+.utmbar{background:var(--bg-soft);border:1px dashed var(--brand-line);border-radius:8px;padding:7px 10px;font-size:.78rem;color:var(--ink-3);margin-bottom:13px}
+.utmbar b{color:var(--brand-2)}
+.bars{margin-top:6px}
+.barrow{display:flex;align-items:center;gap:9px;margin:9px 0;font-size:.85rem}
+.barrow .lb{width:88px;flex:0 0 auto;color:var(--ink-2)}
+.barrow .track{flex:1;background:var(--bg-soft);border-radius:5px;height:22px;position:relative;overflow:hidden}
+.barrow .fill{position:absolute;left:0;top:0;bottom:0;background:var(--brand);border-radius:5px}
+.barrow .fill.b2{background:#5b8f86}
+.barrow .fill.b3{background:var(--accent)}
+.barrow .vl{width:74px;flex:0 0 auto;text-align:right;font-weight:700}
 .pc-hint{display:none}
 /* 관리자 표는 원래 PC용 화면 — 좁은 화면에서는 표만 가로로 넘겨 봅니다 */
 @media (max-width:760px){
@@ -208,6 +231,7 @@ tbody tr.isnew{background:#fffaf3}
     <!-- ============ 관리자 화면 ============ -->
     <div id="adminMode" hidden>
       <div class="admnav">
+        <button id="tabAds" onclick="goAdmin('ads')" aria-pressed="false">광고 성과</button>
         <button id="tabList" onclick="goAdmin('list')" aria-pressed="true">신청 관리</button>
         <button id="tabPay" onclick="goAdmin('pay')" aria-pressed="false">결제·환불 관리</button>
         <button id="tabTeacher" onclick="goAdmin('teacher')" aria-pressed="false">선생님 관리</button>
@@ -241,6 +265,23 @@ var CODE = {
 };
 var PRODUCT = { name:"시스루 12주 과정", price:1680000, deposit:168000 };
 
+/* 광고 캠페인 — 소재별 랜딩과 UTM이 다르게 붙는다 (공고 기능 1·12·13) */
+var ADS = [
+  { key:"A", media:"인스타그램", label:"부모님 재활 · 감성 소재",
+    head:"퇴원하고 집에 오신 뒤,<br>재활은 어떻게 하고 계신가요?",
+    body:"물리치료사·운동처방사가 집으로 찾아갑니다", grad:"linear-gradient(135deg,#0f6d63,#3a9c8f)",
+    utm:{source:"meta",medium:"cpc",campaign:"senior_rehab_0901",content:"emotional_a",landing:"A"},
+    landing:{ title:"부모님 재활,<br>집으로 찾아갑니다",
+      sub:"병원 재활이 끝난 뒤가 더 중요합니다. 선생님이 댁으로 방문해 12주 동안 함께합니다." } },
+  { key:"B", media:"네이버", label:"퇴원 후 공백 · 정보 소재",
+    head:"입원 재활은 6개월이면 끝납니다.<br>그 다음은요?",
+    body:"집에서 이어가는 12주 방문재활 프로그램", grad:"linear-gradient(135deg,#1f5fa8,#4a86c9)",
+    utm:{source:"naver",medium:"cpc",campaign:"rehab_gap_0901",content:"info_b",landing:"B"},
+    landing:{ title:"입원 재활 뒤의 공백,<br>집에서 채웁니다",
+      sub:"제도권 집중 재활은 최대 6개월입니다. 그 뒤 자택 재활을 12주 과정으로 이어갑니다." } }
+];
+var DIRECT_UTM = {source:"direct",medium:"none",campaign:"-",content:"-",landing:"-"};
+
 /* ========== 상태 ========== */
 var S = null;
 var LS_KEY = "hr-demo-state-v1";
@@ -249,8 +290,9 @@ var memoryOnly = false;
 function seed(){
   var now = Date.now(), H = 3600000;
   return {
-    mode:"customer", cScreen:"C1", aScreen:"list", guide:true, seenIntro:false,
-    detailId:null, revealed:{}, filter:{status:"전체"},
+    mode:"customer", cScreen:"C0", aScreen:"list", guide:true, seenIntro:false,
+    detailId:null, revealed:{}, filter:{status:"전체"}, utm:null, adKey:null,
+    adStats:{ A:{visit:142,apply:21,pay:6}, B:{visit:98,apply:19,pay:3}, direct:{visit:34,apply:3,pay:1} },
     form:{ disease:[], purpose:[], mobility:"", area:"", time:[], seniorName:"", seniorAge:"",
            guardianName:"", phone:"", agreePrivacy:false, agreeHealth:false, agreeMkt:false },
     member:null, myAppId:null, seq:6,
@@ -280,7 +322,8 @@ function mkApp(id,no,g,area,status,pay,at,dis,pur,mob,tm,sn,sa,teacherNo,started
     paidAt: pay==="성공"||pay==="환불완료" ? at+12*60000 : null,
     payConfirmedBy: status==="계약"||status==="배정" ? "대표" : null,
     payConfirmedAt: status==="계약"||status==="배정" ? at+3*3600000 : null,
-    utm:{source:"meta",medium:"cpc",campaign:"senior_rehab_0901",landing:"A"},
+    utm:(id%2 ? {source:"meta",medium:"cpc",campaign:"senior_rehab_0901",content:"emotional_a",landing:"A"}
+              : {source:"naver",medium:"cpc",campaign:"rehab_gap_0901",content:"info_b",landing:"B"}),
     memos: status==="신청"?[]:[{by:"대표",at:at+3*3600000,text:"통화 완료. 방문 희망 시간 확인함."}],
     history: buildHist(status, at), isNew:false };
 }
@@ -359,16 +402,18 @@ function setMode(m){ S.mode=m; save(); renderAll(); window.scrollTo(0,0); }
 function toggleGuide(){ S.guide=!S.guide; save(); renderMode(); renderGuide(); }
 
 var GUIDES = {
-  C1:["1/7","광고를 눌러 들어온 화면입니다. <b>상태 확인 시작</b>을 눌러보세요."],
-  C2:["2/7","부모님 상태를 입력하는 화면입니다. 실제로 골라보세요 — 가입은 아직 받지 않습니다."],
-  C2b:["3/7","연락처와 동의를 받는 2단계입니다. <b>건강정보 동의를 따로 받는 것</b>이 법적 요건입니다."],
-  C3:["4/7","입력 결과 안내입니다. 진단이 아니라 <b>상담 가능 여부</b>를 알려드립니다."],
-  C4:["5/7","여기서 처음 가입을 받습니다. 결제 직전이라 이탈이 가장 적습니다."],
-  C5:["6/7","단일 상품과 계약금을 안내합니다. 계약금은 정가의 10%입니다."],
-  C6:["7/7","결제창입니다. <b>테스트</b>이므로 실제 결제는 되지 않습니다. 성공·실패 모두 눌러보실 수 있습니다."],
-  C7:["완료","결제가 끝났습니다. 오른쪽에 <b>발송된 알림 3건</b>이 쌓였습니다. 이제 위에서 <b>대표님 화면</b>으로 바꿔보세요."]
+  C0:["1/8","광고를 보고 들어오는 자리입니다. <b>광고 소재마다 다른 랜딩</b>으로 연결되고, 어느 광고에서 왔는지가 결제까지 따라갑니다. 아무 광고나 눌러보세요."],
+  C1:["2/8","방금 누르신 광고에 맞는 랜딩페이지입니다. <b>상태 확인 시작</b>을 눌러보세요."],
+  C2:["3/8","부모님 상태를 입력하는 화면입니다. 실제로 골라보세요 — 가입은 아직 받지 않습니다."],
+  C2b:["4/8","연락처와 동의를 받는 2단계입니다. <b>건강정보 동의를 따로 받는 것</b>이 법적 요건입니다."],
+  C3:["5/8","입력 결과 안내입니다. 진단이 아니라 <b>상담 가능 여부</b>를 알려드립니다."],
+  C4:["6/8","여기서 처음 가입을 받습니다. 결제 직전이라 이탈이 가장 적습니다."],
+  C5:["7/8","단일 상품과 계약금을 안내합니다. 계약금은 정가의 10%입니다."],
+  C6:["8/8","결제창입니다. <b>테스트</b>이므로 실제 결제는 되지 않습니다. 성공·실패 모두 눌러보실 수 있습니다."],
+  C7:["완료","결제가 끝났습니다. 오른쪽에 <b>알림 3건과 광고 전환 이벤트</b>가 쌓였습니다. 이제 위에서 <b>대표님 화면</b>으로 바꿔보세요."]
 };
 var AGUIDES = {
+  ads:["관리자","<b>어느 광고가 돈이 되는지</b> 보는 화면입니다. 방금 누르신 광고의 숫자가 1씩 올라가 있습니다."],
   list:["관리자","신청 목록입니다. 방금 넣으신 신청이 맨 위에 있습니다. 신청번호를 눌러 상세로 들어가 보세요."],
   detail:["관리자","여기서 <b>건강정보 열람 → 결제 확인 → 상태 변경 → 선생님 배정</b> 순서로 처리합니다."],
   assign:["관리자","조건이 맞지 않는 선생님을 골라보세요. 경고가 뜨고 <b>사유를 적어야</b> 배정됩니다."],
@@ -397,21 +442,39 @@ function renderNotify(){
 function goC(s){ S.cScreen=s; save(); renderGuide(); renderCustomer(); window.scrollTo(0,0); }
 function renderCustomer(){
   var nav=$("cNav"), scr=$("cScr"), f=S.form;
-  var titles={C1:"시스루 방문재활",C2:"부모님 상태 확인",C2b:"연락처 입력",C3:"상담 안내",C4:"가입·로그인",C5:"상품 안내",C6:"결제",C7:"결제 완료"};
+  var titles={C0:"광고 보기",C1:"시스루 방문재활",C2:"부모님 상태 확인",C2b:"연락처 입력",C3:"상담 안내",C4:"가입·로그인",C5:"상품 안내",C6:"결제",C7:"결제 완료"};
   var cnt={C2:"1 / 2",C2b:"2 / 2"};
-  var backable = ["C2","C2b","C3","C4","C5","C6"].indexOf(S.cScreen)>=0;
+  var backable = ["C1","C2","C2b","C3","C4","C5","C6"].indexOf(S.cScreen)>=0;
   nav.innerHTML = (backable?'<button class="back" onclick="cBack()">←</button>':'') +
     '<span>'+esc(titles[S.cScreen]||"")+'</span>' + (cnt[S.cScreen]?'<span class="cnt">'+cnt[S.cScreen]+'</span>':'');
 
-  if(S.cScreen==="C1"){
+  if(S.cScreen==="C0"){
     scr.innerHTML =
-      '<h2 class="h-lg">부모님 재활,<br>집으로 찾아갑니다</h2>'+
-      '<p class="sub">병원 재활이 끝난 뒤가 더 중요합니다. 물리치료사·운동처방사 선생님이 집으로 방문해 12주 동안 함께합니다.</p>'+
+      '<p class="sub" style="margin-bottom:12px">고객은 광고를 보고 들어옵니다. 소재마다 <b>다른 랜딩페이지</b>로 연결되고, 어느 광고에서 왔는지가 결제까지 따라 기록됩니다.'+
+        whyBtn("광고 링크에 붙는 표시(UTM)를 첫 화면에서 받아 신청·결제 기록에 함께 저장합니다. 그래야 '어느 광고에서 온 손님이 실제로 결제했는지'를 나중에 셀 수 있습니다. 브라우저에만 두면 결제까지 이어지지 않아 측정이 끊깁니다.")+'</p>'+
+      '<div class="feed"><div class="fh">📱 광고 피드 (예시)</div>'+
+      ADS.map(function(ad,i){
+        return '<button class="ad" onclick="clickAd(\''+ad.key+'\')">'+
+          '<div class="adtop"><span class="avatar">시</span><span><b>시스루 방문재활</b></span><span class="spon">'+esc(ad.media)+' · 광고</span></div>'+
+          '<div class="adimg" style="background:'+ad.grad+'">'+ad.head+'</div>'+
+          '<div class="adbody"><b>'+esc(ad.body)+'</b><span>소재 '+esc(ad.key)+' · '+esc(ad.label)+'</span>'+
+          '<span class="cta">자세히 보기 →</span></div></button>';
+      }).join("")+'</div>'+
+      '<button class="btn sec" style="margin-top:6px" onclick="clickAd(null)">광고 없이 바로 방문 (직접 유입)</button>';
+  }
+  else if(S.cScreen==="C1"){
+    var ad = S.adKey ? ADS.filter(function(a){return a.key===S.adKey;})[0] : null;
+    var L = ad ? ad.landing : { title:"부모님 재활,<br>집으로 찾아갑니다",
+      sub:"병원 재활이 끝난 뒤가 더 중요합니다. 선생님이 댁으로 방문해 12주 동안 함께합니다." };
+    scr.innerHTML =
+      utmBar()+
+      '<h2 class="h-lg">'+L.title+'</h2>'+
+      '<p class="sub">'+esc(L.sub)+'</p>'+
       '<div class="price"><div class="r"><span>주 2회 방문 · 12주 과정</span></div>'+
       '<div class="r"><span>정가</span><b>'+won(PRODUCT.price)+'원</b></div></div>'+
       '<p class="muted" style="margin-bottom:14px">먼저 부모님 상태를 확인해 드립니다. 1분이면 됩니다.</p>'+
       '<button class="btn" onclick="goC(\'C2\')">부모님 상태 확인 시작</button>'+
-      '<p class="muted" style="margin-top:12px;text-align:center">이 화면은 광고 소재별로 다르게 만듭니다</p>';
+      '<p class="muted" style="margin-top:12px;text-align:center">'+(ad?'소재 '+esc(ad.key)+' 전용 랜딩입니다 — 캠페인마다 1~2종을 따로 만듭니다':'광고 없이 들어온 경우의 기본 랜딩입니다')+'</p>';
   }
   else if(S.cScreen==="C2"){
     scr.innerHTML =
@@ -500,10 +563,11 @@ function renderCustomer(){
       '<div class="result-icon">✓</div>'+
       '<h2 class="h-md" style="text-align:center">결제가 완료되었습니다</h2>'+
       '<p class="sub" style="text-align:center">담당자가 확인 후 연락드립니다. 접수 번호 '+esc(a.no)+'</p>'+
-      '<div class="sec-block"><h4>이때 발송되는 문자</h4>'+
-        '<div class="kv"><dt>고객</dt><dd>접수 확인 문자</dd><dt>관리자</dt><dd>신규 신청 알림</dd><dt>인근 선생님</dt><dd>수요 발생 알림(고객 정보 제외)</dd></div></div>'+
+      '<div class="sec-block"><h4>이때 자동으로 일어나는 일</h4>'+
+        '<div class="kv"><dt>고객</dt><dd>접수 확인 문자</dd><dt>관리자</dt><dd>신규 신청 알림</dd><dt>인근 선생님</dt><dd>수요 발생 알림(고객 정보 제외)</dd>'+
+        '<dt>광고 매체</dt><dd>구매 전환 이벤트 전송 — 어느 광고가 성과를 냈는지 기록</dd></div></div>'+
       '<button class="btn" onclick="setMode(\'admin\')">대표님 화면에서 이 신청 처리해보기 →</button>'+
-      '<p class="muted" style="margin-top:10px;text-align:center">오른쪽 <b>발송된 알림</b>에 3건이 쌓였습니다</p>';
+      '<p class="muted" style="margin-top:10px;text-align:center">오른쪽 <b>발송된 알림</b>을 확인해 보세요</p>';
   }
   renderNotify();
 }
@@ -524,12 +588,27 @@ function agreeRow(key,label,req){
     '<span>'+(req?'<span class="req">*</span> ':'')+esc(label)+'</span>'+
     '<button type="button" class="view" onclick="showAgree()">보기</button></label>';
 }
+function utmBar(){
+  var u = S.utm || DIRECT_UTM;
+  var txt = u.source==="direct" ? "직접 유입 (광고 경유 아님)"
+    : u.source+" / "+u.medium+" / 소재 "+u.content+" → 랜딩 "+u.landing;
+  return '<div class="utmbar">유입 기록 <b>'+esc(txt)+'</b><br>이 기록이 신청·결제까지 따라갑니다</div>';
+}
+function clickAd(key){
+  var ad = key ? ADS.filter(function(a){return a.key===key;})[0] : null;
+  S.adKey = key; S.utm = ad ? ad.utm : DIRECT_UTM;
+  var slot = key || "direct";
+  if(S.adStats[slot]) S.adStats[slot].visit++;
+  save();
+  notify("광고 매체","픽셀","페이지 조회 이벤트 전송 · "+(ad?ad.utm.source+" / 소재 "+ad.utm.content:"direct"));
+  goC("C1");
+}
 function whyBtn(text){ return '<button class="why" onclick="why('+JSON.stringify(text).replace(/"/g,"&quot;")+')" title="왜 이렇게 되나요?">i</button>'; }
 function why(t){ modal('<h3>왜 이렇게 되나요?</h3><p>'+esc(t)+'</p><div class="acts"><button class="btn" onclick="closeModal()">닫기</button></div>'); }
 function showAgree(){ modal('<h3>동의 전문 (예시)</h3><p class="muted">실제 서비스에서는 법률 검토를 거친 문안이 들어갑니다. 이 데모에서는 자리만 표시합니다.</p><p>수집 항목 · 이용 목적 · 보유 기간 · 동의 거부 권리와 불이익 안내가 들어갑니다.</p><div class="acts"><button class="btn" onclick="closeModal()">닫기</button></div>'); }
 function setF(k,v){ S.form[k]=v; save(); renderCustomer(); }
 function tgl(k,v){ var a=S.form[k], i=a.indexOf(v); if(i>=0) a.splice(i,1); else a.push(v); save(); renderCustomer(); }
-function cBack(){ var o={C2:"C1",C2b:"C2",C3:"C2b",C4:"C3",C5:"C4",C6:"C5"}; goC(o[S.cScreen]||"C1"); }
+function cBack(){ var o={C1:"C0",C2:"C1",C2b:"C2",C3:"C2b",C4:"C3",C5:"C4",C6:"C5"}; goC(o[S.cScreen]||"C0"); }
 function nextC2(){ goC("C2b"); }
 function curApp(){ return S.apps.filter(function(a){ return a.id===S.myAppId; })[0] || S.apps[0]; }
 
@@ -544,9 +623,13 @@ function submitForm(){
     teacherNo:null, assignedAt:null, started:false,
     orderNo:"HR"+fmtOrder(now)+"-"+("00000"+S.seq).slice(-6), paidAt:null,
     payConfirmedBy:null, payConfirmedAt:null,
-    utm:{source:"meta",medium:"cpc",campaign:"senior_rehab_0901",landing:"A"},
+    utm: S.utm || DIRECT_UTM,
     memos:[], history:[], isNew:true };
-  S.apps.push(a); S.myAppId=id; save();
+  S.apps.push(a); S.myAppId=id;
+  var slot = S.adKey || "direct";
+  if(S.adStats[slot]) S.adStats[slot].apply++;
+  save();
+  notify("광고 매체","픽셀","신청 완료 전환 이벤트 전송 · "+esc((S.utm||DIRECT_UTM).source));
   goC("C3");
   toast("신청이 접수되었습니다. 접수번호 "+no);
 }
@@ -568,28 +651,70 @@ function pay(ok){
       '<div class="acts"><button class="btn sec" onclick="closeModal()">닫기</button><button class="btn" onclick="closeModal();pay(true)">다시 결제해보기</button></div>');
     renderCustomer(); return;
   }
-  a.pay="성공"; a.paidAt=Date.now(); save();
+  a.pay="성공"; a.paidAt=Date.now();
+  var slot = S.adKey || "direct";
+  if(S.adStats[slot]) S.adStats[slot].pay++;
+  save();
   notify("고객("+a.guardian+"님)","SMS","[시스루] 접수가 완료되었습니다. 접수번호 "+a.no+" · 담당자가 확인 후 연락드립니다.");
   notify("관리자","알림톡","신규 신청이 접수되었습니다. "+a.no+" / "+a.area+" / 계약금 결제 완료");
   notify("인근 선생님","알림톡",a.area+" 지역에 신규 방문 요청이 있습니다. (고객 식별 정보는 포함하지 않습니다)");
+  notify("광고 매체","픽셀","구매 전환 이벤트 전송 · 금액 "+won(PRODUCT.deposit)+"원 · "+((S.utm||DIRECT_UTM).source));
   goC("C7");
 }
 
 /* ========== 관리자 화면 ========== */
 function goAdmin(s){ S.aScreen=s; save(); renderGuide(); renderAdmin(); window.scrollTo(0,0); }
 function renderAdmin(){
-  ["list","pay","teacher","opt"].forEach(function(k){
+  ["ads","list","pay","teacher","opt"].forEach(function(k){
     var b=$("tab"+k.charAt(0).toUpperCase()+k.slice(1));
     if(b) b.setAttribute("aria-pressed", S.aScreen===k || (k==="list"&&(S.aScreen==="detail"||S.aScreen==="assign")));
   });
   var el=$("aScr");
   var hint='<div class="pc-hint">관리자 화면은 대표님이 <b>컴퓨터</b>에서 쓰시는 화면입니다. 휴대폰에서는 표를 옆으로 밀어 보실 수 있습니다.</div>';
-  if(S.aScreen==="list") el.innerHTML=hint+viewList();
+  if(S.aScreen==="ads") el.innerHTML=hint+viewAds();
+  else if(S.aScreen==="list") el.innerHTML=hint+viewList();
   else if(S.aScreen==="detail") el.innerHTML=viewDetail();
   else if(S.aScreen==="assign") el.innerHTML=viewAssign();
   else if(S.aScreen==="pay") el.innerHTML=viewPay();
   else if(S.aScreen==="teacher") el.innerHTML=viewTeacher();
   else if(S.aScreen==="opt") el.innerHTML=viewOpt();
+}
+function viewAds(){
+  var rows = ADS.map(function(ad){ return {key:ad.key, name:"소재 "+ad.key+" · "+ad.label, media:ad.media, st:S.adStats[ad.key]}; });
+  rows.push({key:"direct", name:"직접 유입 (광고 경유 아님)", media:"-", st:S.adStats.direct});
+  var maxV = Math.max.apply(null, rows.map(function(r){ return r.st.visit; }))||1;
+  var tot = rows.reduce(function(o,r){ o.v+=r.st.visit; o.a+=r.st.apply; o.p+=r.st.pay; return o; }, {v:0,a:0,p:0});
+  var body = rows.map(function(r){
+    var cvr = r.st.visit ? (r.st.pay/r.st.visit*100).toFixed(1) : "0.0";
+    var isMine = (S.adKey||"direct")===r.key;
+    return '<tr'+(isMine?' class="isnew"':'')+'><td><b>'+esc(r.name)+'</b>'+(isMine?'<span class="tag-new">방금 이 광고</span>':'')+
+      '<br><span class="muted">'+esc(r.media)+'</span></td>'+
+      '<td>'+r.st.visit+'</td><td>'+r.st.apply+'</td><td><b>'+r.st.pay+'</b></td>'+
+      '<td>'+(r.st.visit?(r.st.apply/r.st.visit*100).toFixed(1):"0.0")+'%</td>'+
+      '<td><b>'+cvr+'%</b></td></tr>';
+  }).join("");
+  var funnel = [
+    {lb:"랜딩 방문", v:tot.v, cls:""},
+    {lb:"상태 확인 신청", v:tot.a, cls:"b2"},
+    {lb:"계약금 결제", v:tot.p, cls:"b3"}
+  ];
+  return '<div class="panel" style="margin-bottom:14px"><div class="head"><h3>전체 전환 흐름</h3>'+
+      '<span class="muted">랜딩 방문 → 신청 → 결제</span></div>'+
+    '<div class="body"><div class="bars">'+funnel.map(function(f){
+      var pct = tot.v? Math.max(4, f.v/tot.v*100) : 0;
+      return '<div class="barrow"><span class="lb">'+esc(f.lb)+'</span>'+
+        '<span class="track"><span class="fill '+f.cls+'" style="width:'+pct.toFixed(1)+'%"></span></span>'+
+        '<span class="vl">'+f.v+' 건</span></div>';
+    }).join("")+'</div>'+
+    '<p class="muted" style="margin:10px 0 0">방문한 '+tot.v+'명 중 <b>'+tot.p+'명</b>이 계약금을 결제했습니다 (전환율 '+
+      (tot.v?(tot.p/tot.v*100).toFixed(1):"0.0")+'%). 광고비를 어디에 더 쓸지 이 숫자로 판단하십니다.'+
+      whyBtn("광고 링크에 붙은 표시를 신청·결제 기록까지 그대로 남기기 때문에, 어느 광고에서 온 사람이 실제로 결제했는지 셀 수 있습니다. 이 숫자가 없으면 '광고비를 썼는데 효과가 있었나'를 감으로 판단하게 됩니다.")+'</p></div></div>'+
+
+    '<div class="panel"><div class="head"><h3>광고 소재별 성과</h3></div>'+
+    '<table><thead><tr><th>광고 소재</th><th>방문</th><th>신청</th><th>결제</th><th>신청률</th><th>결제 전환율</th></tr></thead>'+
+    '<tbody>'+body+'</tbody></table>'+
+    '<div class="body"><p class="muted" style="margin:0">고객 화면에서 광고를 눌러 결제까지 해보시면 해당 소재의 숫자가 올라갑니다. '+
+      '실제 서비스에서는 광고 매체 관리자 화면에도 같은 전환이 기록되어, 매체가 자동으로 성과 좋은 소재에 예산을 몰아줍니다.</p></div></div>';
 }
 function sortedApps(){
   return S.apps.slice().sort(function(x,y){ return y.createdAt-x.createdAt; });
@@ -651,8 +776,10 @@ function viewDetail(){
           whyBtn("질환·거동 같은 건강정보는 법에서 특별히 보호하는 민감정보입니다. 목록에는 아예 표시하지 않고, 상세에서도 열람 버튼을 눌러야 보이며 그 기록이 남습니다.")+'</div>')+'</div>'+
 
     '<div class="sec-block"><h4>유입 정보</h4><dl class="kv">'+
-      '<dt>광고</dt><dd>'+esc(a.utm.source)+' / '+esc(a.utm.medium)+' / '+esc(a.utm.campaign)+' / 랜딩 '+esc(a.utm.landing)+'</dd></dl>'+
-      '<p class="muted" style="margin:7px 0 0">어느 광고에서 들어와 결제까지 갔는지 이 기록으로 확인합니다</p></div>'+
+      '<dt>매체</dt><dd>'+esc(a.utm.source)+' / '+esc(a.utm.medium)+'</dd>'+
+      '<dt>캠페인</dt><dd>'+esc(a.utm.campaign)+'</dd>'+
+      '<dt>소재 · 랜딩</dt><dd>'+esc(a.utm.content||"-")+' · 랜딩 '+esc(a.utm.landing)+'</dd></dl>'+
+      '<p class="muted" style="margin:7px 0 0">이 고객이 <b>어느 광고 소재</b>를 보고 들어와 결제까지 갔는지가 건별로 남습니다. 광고 성과 화면의 숫자가 이 기록에서 나옵니다.</p></div>'+
 
     '<div class="sec-block"><h4>결제 정보 <span class="right">'+
       '<button class="mini" onclick="confirmPay('+a.id+')" '+(canPayConfirm?'':'disabled')+'>결제 확인</button></span></h4><dl class="kv">'+
@@ -876,7 +1003,7 @@ function closeModal(){ $("modalRoot").innerHTML=""; }
     S.seenIntro=true; save();
     modal('<h3>계약 1주차에 드릴 화면 시안입니다</h3>'+
       '<p>제안서에 적은 <b>"1주차에 클릭 가능한 화면 시안"</b>이 어떤 것인지 미리 보시라고 준비했습니다.</p>'+
-      '<p><b>이렇게 보시면 됩니다.</b> 고객 화면에서 직접 신청하고 결제해 보신 뒤, 위쪽에서 <b>대표님 화면</b>으로 바꿔보세요. 방금 넣으신 신청이 목록에 그대로 올라와 있고, 상태를 바꾸고 선생님을 배정할 수 있습니다.</p>'+
+      '<p><b>이렇게 보시면 됩니다.</b> 광고를 눌러 들어와 신청하고 결제해 보신 뒤, 위쪽에서 <b>대표님 화면</b>으로 바꿔보세요. 방금 넣으신 신청이 목록에 그대로 올라와 있고, <b>광고 성과</b> 화면에서는 그 광고의 숫자가 올라가 있습니다.</p>'+
       '<p class="muted">실제 결제나 문자 발송은 일어나지 않습니다. 실제 개발에서는 이 화면 뒤에 서버·결제 연동·보안이 붙습니다.</p>'+
       '<div class="acts"><button class="btn" onclick="closeModal()">시작하기</button></div>');
   }
