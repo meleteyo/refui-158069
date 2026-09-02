@@ -592,7 +592,8 @@ function utmBar(){
   var u = S.utm || DIRECT_UTM;
   var txt = u.source==="direct" ? "직접 유입 (광고 경유 아님)"
     : u.source+" / "+u.medium+" / 소재 "+u.content+" → 랜딩 "+u.landing;
-  return '<div class="utmbar">유입 기록 <b>'+esc(txt)+'</b><br>이 기록이 신청·결제까지 따라갑니다</div>';
+  return '<div class="utmbar">어느 광고에서 왔는지 표시 <b>'+esc(txt)+'</b><br>'+
+    '광고 링크 뒤에 붙어 오는 꼬리표(UTM)입니다. 이 기록이 신청·결제까지 따라갑니다.</div>';
 }
 function clickAd(key){
   var ad = key ? ADS.filter(function(a){return a.key===key;})[0] : null;
