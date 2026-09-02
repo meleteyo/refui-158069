@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow, noarchive">
+<title>화면 시안 데모 — 시니어 방문재활 매칭</title>
+<meta property="og:title" content="화면 시안 데모 — 시니어 방문재활 매칭">
+<meta property="og:description" content="고객 신청부터 대표님의 선생님 배정까지, 직접 눌러보실 수 있는 화면 시안입니다.">
+<style>
+:root{
+  --ink:#16262c; --ink-2:#3d5058; --ink-3:#6b7f88;
+  --brand:#0f6d63; --brand-2:#0b544c; --brand-soft:#e8f4f2; --brand-line:#bfdcd7;
+  --accent:#b45f2b; --accent-soft:#fdf1e8;
+  --bg:#ffffff; --bg-soft:#f6f9f8; --line:#dde5e3;
+  --s-apply-bg:#eef1f2; --s-apply-fg:#5b6b73;
+  --s-confirm-bg:#e7f0fb; --s-confirm-fg:#1f5fa8;
+  --s-assign-bg:#e6f5ec; --s-assign-fg:#1a7f4b;
+  --s-contract-bg:#d8efe2; --s-contract-fg:#0f5c39;
+  --s-cancel-bg:#fbeceb; --s-cancel-fg:#a8392c;
+  --s-alert-bg:#fdf0e3; --s-alert-fg:#a2601f;
+  --radius:12px;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg-soft);color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Pretendard","Noto Sans KR","Malgun Gothic",system-ui,sans-serif;
+  font-size:15px;line-height:1.65;letter-spacing:-0.01em;word-break:keep-all;overflow-wrap:break-word}
+button{font:inherit;cursor:pointer}
+input,select,textarea{font:inherit;color:inherit}
+h1,h2,h3,h4{margin:0;line-height:1.35;letter-spacing:-0.02em}
+[hidden]{display:none !important}
+
+/* ===== 상단 바 ===== */
+#topbar{position:sticky;top:0;z-index:50;background:#fff;border-bottom:1px solid var(--line)}
+.notice{background:var(--accent-soft);color:#8a4a20;font-size:.8rem;padding:6px 14px;text-align:center;border-bottom:1px solid #f2ddcc}
+.notice b{font-weight:800}
+.bar{display:flex;align-items:center;gap:10px;padding:9px 14px;flex-wrap:wrap}
+.bar .ttl{font-weight:800;font-size:.95rem;margin-right:auto}
+.bar .ttl span{font-weight:500;color:var(--ink-3);font-size:.82rem}
+.modes{display:flex;background:var(--bg-soft);border:1px solid var(--line);border-radius:999px;padding:3px}
+.modes button{border:0;background:transparent;border-radius:999px;padding:6px 14px;font-size:.86rem;font-weight:700;color:var(--ink-3)}
+.modes button[aria-pressed="true"]{background:var(--brand);color:#fff}
+.ghost{border:1px solid var(--line);background:#fff;border-radius:8px;padding:6px 11px;font-size:.82rem;color:var(--ink-2)}
+.ghost:hover{border-color:var(--brand-line)}
+
+/* ===== 레이아웃 ===== */
+/* minmax(0,1fr): 안쪽 표가 넓어도 컬럼이 늘어나지 않게 — 늘어나면 페이지 전체가 가로로 넘친다 */
+.wrap{max-width:1180px;margin:0 auto;padding:16px 14px 60px;display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:18px;align-items:start}
+.wrap > *{min-width:0}
+@media (max-width:980px){.wrap{grid-template-columns:minmax(0,1fr)}}
+
+/* 가이드 레일 */
+.guide{background:var(--brand-soft);border:1px solid var(--brand-line);border-radius:10px;padding:10px 13px;margin-bottom:14px;font-size:.88rem;color:var(--brand-2);display:flex;gap:10px;align-items:flex-start}
+.guide .step{background:var(--brand);color:#fff;border-radius:6px;padding:1px 8px;font-size:.76rem;font-weight:800;white-space:nowrap}
+
+/* 폰 프레임 */
+.phone{max-width:390px;margin:0 auto;background:#fff;border:1px solid var(--line);border-radius:22px;overflow:hidden;box-shadow:0 6px 24px rgba(20,45,50,.07)}
+.phone .nav{display:flex;align-items:center;gap:8px;padding:11px 14px;border-bottom:1px solid var(--line);background:#fff;font-size:.9rem;font-weight:700}
+.phone .nav .back{border:0;background:transparent;color:var(--ink-3);padding:0 4px 0 0;font-size:1rem}
+.phone .nav .cnt{margin-left:auto;color:var(--ink-3);font-weight:600;font-size:.82rem}
+.scr{padding:18px 16px 22px}
+
+/* 공통 요소 */
+.h-lg{font-size:1.28rem;margin-bottom:8px}
+.h-md{font-size:1.05rem;margin-bottom:6px}
+.sub{color:var(--ink-2);font-size:.9rem;margin:0 0 14px}
+.muted{color:var(--ink-3);font-size:.82rem}
+.field{margin-bottom:16px}
+.field > label{display:block;font-weight:700;font-size:.9rem;margin-bottom:7px}
+.req{color:var(--accent)}
+.chips{display:flex;flex-wrap:wrap;gap:7px}
+.chip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:7px 13px;font-size:.86rem;color:var(--ink-2)}
+.chip[aria-pressed="true"]{background:var(--brand-soft);border-color:var(--brand);color:var(--brand-2);font-weight:700}
+select,input[type=text],input[type=tel],input[type=number],textarea{width:100%;border:1px solid var(--line);border-radius:9px;padding:10px 11px;background:#fff}
+select:focus,input:focus,textarea:focus{outline:2px solid var(--brand-line);outline-offset:1px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.btn{display:block;width:100%;border:0;background:var(--brand);color:#fff;border-radius:10px;padding:13px;font-weight:800;font-size:.98rem}
+.btn:disabled{background:#c6d3d1;color:#fff}
+.btn.sec{background:#fff;color:var(--brand-2);border:1px solid var(--brand-line)}
+.btn.warn{background:var(--accent)}
+.agree{border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:12px 0;margin:16px 0}
+.agree label{display:flex;gap:9px;align-items:flex-start;font-size:.88rem;margin:9px 0;color:var(--ink-2)}
+.agree input{margin-top:3px;width:17px;height:17px;flex:0 0 auto}
+.agree .view{margin-left:auto;border:0;background:transparent;color:var(--ink-3);font-size:.8rem;text-decoration:underline}
+.result-icon{width:56px;height:56px;border-radius:50%;background:var(--brand-soft);color:var(--brand);display:flex;align-items:center;justify-content:center;font-size:1.7rem;margin:6px auto 12px}
+.price{border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:13px 0;margin:16px 0}
+.price .r{display:flex;justify-content:space-between;margin:5px 0;font-size:.92rem;color:var(--ink-2)}
+.price .r b{color:var(--ink);font-size:1.05rem}
+.pay-mock{border:2px dashed var(--accent);border-radius:12px;padding:16px;background:var(--accent-soft);margin-bottom:14px}
+.pay-mock .tag{display:inline-block;background:var(--accent);color:#fff;font-size:.72rem;font-weight:800;border-radius:5px;padding:2px 8px;margin-bottom:8px}
+
+/* ⓘ 규칙 툴팁 */
+.why{display:inline-flex;align-items:center;justify-content:center;width:17px;height:17px;border-radius:50%;
+  border:1px solid var(--brand-line);background:#fff;color:var(--brand);font-size:.72rem;font-weight:800;margin-left:5px;vertical-align:middle;padding:0}
+.why:hover{background:var(--brand-soft)}
+
+/* ===== 관리자 ===== */
+.panel{background:#fff;border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+.panel .head{display:flex;align-items:center;gap:9px;padding:12px 15px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.panel .head h3{font-size:1rem;margin-right:auto}
+.panel .body{padding:15px}
+.admnav{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.admnav button{border:1px solid var(--line);background:#fff;border-radius:8px;padding:7px 12px;font-size:.85rem;color:var(--ink-2)}
+.admnav button[aria-pressed="true"]{background:var(--brand);border-color:var(--brand);color:#fff;font-weight:700}
+.filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center;font-size:.85rem}
+.filters select{width:auto;min-width:110px;padding:7px 9px}
+.counts{font-size:.85rem;color:var(--ink-2);padding:9px 15px;background:var(--bg-soft);border-bottom:1px solid var(--line)}
+.counts b{color:var(--ink)}
+.counts .alert{color:var(--s-alert-fg);font-weight:800}
+table{width:100%;border-collapse:collapse;font-size:.86rem}
+th,td{border-bottom:1px solid var(--line);padding:10px 12px;text-align:left;vertical-align:middle}
+th{background:var(--bg-soft);font-weight:700;color:var(--ink-2);font-size:.8rem;white-space:nowrap}
+tbody tr:hover{background:#fafcfb}
+tbody tr.isnew{background:#fffaf3}
+.lnk{border:0;background:transparent;color:var(--brand-2);font-weight:700;text-decoration:underline;padding:0}
+.badge{display:inline-block;border-radius:999px;padding:2px 10px;font-size:.78rem;font-weight:700;white-space:nowrap}
+.s-신청{background:var(--s-apply-bg);color:var(--s-apply-fg)}
+.s-확인{background:var(--s-confirm-bg);color:var(--s-confirm-fg)}
+.s-배정{background:var(--s-assign-bg);color:var(--s-assign-fg)}
+.s-계약{background:var(--s-contract-bg);color:var(--s-contract-fg)}
+.s-취소{background:var(--s-cancel-bg);color:var(--s-cancel-fg)}
+.dot{color:var(--s-alert-fg);font-weight:900;margin-left:5px}
+.tag-new{background:var(--accent);color:#fff;border-radius:5px;font-size:.7rem;font-weight:800;padding:1px 6px;margin-left:6px}
+.sec-block{border:1px solid var(--line);border-radius:10px;padding:13px;margin-bottom:12px}
+.sec-block h4{font-size:.9rem;margin-bottom:9px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.sec-block h4 .right{margin-left:auto}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:5px 14px;font-size:.87rem}
+.kv dt{color:var(--ink-3)}
+.kv dd{margin:0;color:var(--ink)}
+.masked{background:var(--bg-soft);border:1px dashed var(--line);border-radius:9px;padding:14px;text-align:center;color:var(--ink-3);font-size:.87rem}
+.hist{border-top:1px dashed var(--line);margin-top:9px;padding-top:9px;font-size:.82rem;color:var(--ink-3)}
+.hist div{margin:3px 0}
+.mini{border:1px solid var(--line);background:#fff;border-radius:8px;padding:6px 11px;font-size:.83rem;font-weight:700;color:var(--brand-2)}
+.mini:disabled{color:var(--ink-3);background:var(--bg-soft);border-color:var(--line);cursor:not-allowed;font-weight:500}
+.mini.pri{background:var(--brand);border-color:var(--brand);color:#fff}
+.mini.pri:disabled{background:#c6d3d1;border-color:#c6d3d1;color:#fff}
+.inline{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.ok{color:var(--s-assign-fg);font-weight:700}
+.no{color:var(--s-alert-fg);font-weight:700}
+
+/* 알림 패널 */
+.side{position:sticky;top:96px}
+.notify{background:#fff;border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+.notify .nh{padding:11px 14px;border-bottom:1px solid var(--line);font-weight:800;font-size:.9rem;display:flex;align-items:center;gap:7px}
+.notify .nb{max-height:60vh;overflow-y:auto}
+.nitem{padding:11px 14px;border-bottom:1px solid var(--line);font-size:.82rem}
+.nitem:last-child{border-bottom:0}
+.nitem .to{font-weight:700;color:var(--brand-2);font-size:.8rem}
+.nitem .ch{background:var(--bg-soft);border-radius:5px;padding:1px 6px;font-size:.72rem;color:var(--ink-3);margin-left:5px}
+.nitem .msg{color:var(--ink-2);margin-top:3px;line-height:1.5}
+.nempty{padding:22px 14px;text-align:center;color:var(--ink-3);font-size:.84rem}
+
+/* 모달·토스트 */
+.mask{position:fixed;inset:0;background:rgba(15,35,40,.45);display:flex;align-items:center;justify-content:center;padding:18px;z-index:100}
+.modal{background:#fff;border-radius:14px;max-width:440px;width:100%;padding:20px;max-height:86vh;overflow-y:auto}
+.modal h3{font-size:1.05rem;margin-bottom:10px}
+.modal p{font-size:.9rem;color:var(--ink-2);margin:8px 0}
+.modal .acts{display:flex;gap:8px;margin-top:16px}
+.modal .acts .btn{flex:1}
+.unmet{background:var(--s-alert-bg);border-radius:9px;padding:11px 13px;margin:10px 0;font-size:.87rem;color:#7d4a13}
+.unmet li{margin:3px 0}
+#toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);background:#16262c;color:#fff;border-radius:10px;
+  padding:11px 17px;font-size:.87rem;z-index:200;max-width:88vw;box-shadow:0 6px 20px rgba(0,0,0,.2)}
+.optbar{background:#f4f1fa;border:1px dashed #c4b6de;color:#5b4a86;border-radius:9px;padding:9px 12px;font-size:.83rem;margin-bottom:12px;font-weight:600}
+.pc-hint{display:none}
+/* 관리자 표는 원래 PC용 화면 — 좁은 화면에서는 표만 가로로 넘겨 봅니다 */
+@media (max-width:760px){
+  .panel table{display:block;width:100%;max-width:100%;overflow-x:auto;white-space:nowrap;-webkit-overflow-scrolling:touch}
+  .panel table th,.panel table td{white-space:nowrap}
+  .pc-hint{display:block;background:var(--bg-soft);border:1px solid var(--line);border-radius:8px;
+    padding:8px 11px;font-size:.8rem;color:var(--ink-3);margin-bottom:10px}
+  .bar{gap:7px}
+  .bar .ttl{width:100%;margin-bottom:2px}
+}
+.opt-badge{background:#ede7f8;color:#5b4a86;border:1px solid #c4b6de}
+</style>
+</head>
+<body>
+
+<header id="topbar">
+  <div class="notice">
+    <b>화면 흐름을 확인하기 위한 시안입니다.</b> 실제 결제·문자 발송은 일어나지 않으며, 입력하신 내용은 이 브라우저에만 저장됩니다.
+  </div>
+  <div class="bar">
+    <div class="ttl">시니어 방문재활 매칭 <span>· 화면 시안 데모</span></div>
+    <div class="modes" role="group" aria-label="화면 전환">
+      <button id="mCust" aria-pressed="true" onclick="setMode('customer')">고객 화면</button>
+      <button id="mAdm" aria-pressed="false" onclick="setMode('admin')">대표님 화면</button>
+    </div>
+    <button class="ghost" onclick="toggleGuide()" id="guideBtn">가이드 끄기</button>
+    <button class="ghost" onclick="resetAll()">처음부터 다시</button>
+  </div>
+</header>
+
+<div class="wrap">
+  <div>
+    <div class="guide" id="guideBar"></div>
+
+    <!-- ============ 고객 화면 ============ -->
+    <div id="customerMode">
+      <div class="phone">
+        <div class="nav" id="cNav"></div>
+        <div class="scr" id="cScr"></div>
+      </div>
+    </div>
+
+    <!-- ============ 관리자 화면 ============ -->
+    <div id="adminMode" hidden>
+      <div class="admnav">
+        <button id="tabList" onclick="goAdmin('list')" aria-pressed="true">신청 관리</button>
+        <button id="tabPay" onclick="goAdmin('pay')" aria-pressed="false">결제·환불 관리</button>
+        <button id="tabTeacher" onclick="goAdmin('teacher')" aria-pressed="false">선생님 관리</button>
+        <button id="tabOpt" onclick="goAdmin('opt')" aria-pressed="false">옵션 기능 미리보기</button>
+      </div>
+      <div id="aScr"></div>
+    </div>
+  </div>
+
+  <aside class="side">
+    <div class="notify">
+      <div class="nh">발송된 알림 <span class="muted" style="font-weight:500">(실제 발송 아님)</span></div>
+      <div class="nb" id="notifyList"></div>
+    </div>
+  </aside>
+</div>
+
+<div id="modalRoot"></div>
+<div id="toast" hidden></div>
+
+<script>
+"use strict";
+
+/* ========== 코드 데이터 (모델 118 코드 정의서) ========== */
+var CODE = {
+  disease: ["뇌졸중","관절염","파킨슨병","척추질환","골절 후 회복","근감소증"],
+  purpose: ["보행 능력 회복","근력 강화","균형·낙상 예방","일상동작 회복","통증 완화"],
+  mobility: ["혼자 가능","부축하면 가능","보조기구 사용","전혀 불가"],
+  area: ["서울 강동구","서울 송파구","서울 광진구","서울 성동구","서울 강남구","서울 노원구"],
+  time: ["평일 오전","평일 오후","주말 오전","주말 오후"]
+};
+var PRODUCT = { name:"시스루 12주 과정", price:1680000, deposit:168000 };
+
+/* ========== 상태 ========== */
+var S = null;
+var LS_KEY = "hr-demo-state-v1";
+var memoryOnly = false;
+
+function seed(){
+  var now = Date.now(), H = 3600000;
+  return {
+    mode:"customer", cScreen:"C1", aScreen:"list", guide:true, seenIntro:false,
+    detailId:null, revealed:{}, filter:{status:"전체"},
+    form:{ disease:[], purpose:[], mobility:"", area:"", time:[], seniorName:"", seniorAge:"",
+           guardianName:"", phone:"", agreePrivacy:false, agreeHealth:false, agreeMkt:false },
+    member:null, myAppId:null, seq:6,
+    apps:[
+      mkApp(1,"202609-00001","김민수","서울 강동구","계약","성공", now-72*H, ["뇌졸중"],["보행 능력 회복"],"부축하면 가능",["평일 오전"],"김순자",78,1,true),
+      mkApp(2,"202609-00002","이정희","서울 송파구","배정","성공", now-46*H, ["관절염"],["통증 완화"],"보조기구 사용",["평일 오후"],"이복순",81,1,false),
+      mkApp(3,"202609-00003","박서준","서울 강동구","확인","성공", now-20*H, ["파킨슨병"],["균형·낙상 예방"],"부축하면 가능",["평일 오전","평일 오후"],"박정자",76,null,false),
+      mkApp(4,"202609-00004","최민아","서울 광진구","신청","성공", now-4*H, ["척추질환"],["근력 강화"],"혼자 가능",["주말 오전"],"최영수",73,null,false),
+      mkApp(5,"202609-00005","정하윤","서울 강동구","신청","실패", now-1*H, ["골절 후 회복"],["일상동작 회복"],"보조기구 사용",["평일 오전"],"정말순",84,null,false),
+      mkApp(6,"202609-00006","강태욱","서울 성동구","취소","환불완료", now-120*H, ["근감소증"],["근력 강화"],"혼자 가능",["평일 오후"],"강순덕",79,null,false)
+    ],
+    teachers:[
+      {no:1,name:"박지훈",qual:"물리치료사",areas:["서울 강동구","서울 송파구"],times:["평일 오전","평일 오후"],cur:8,max:15,active:true},
+      {no:2,name:"이수민",qual:"운동처방사",areas:["서울 강동구","서울 광진구"],times:["주말 오전","주말 오후"],cur:5,max:15,active:true},
+      {no:3,name:"최영대",qual:"물리치료사",areas:["서울 강동구"],times:["평일 오전"],cur:15,max:15,active:true},
+      {no:4,name:"김하늘",qual:"물리치료사",areas:["서울 강남구","서울 노원구"],times:["평일 오전"],cur:3,max:15,active:true},
+      {no:5,name:"정민서",qual:"운동처방사",areas:["서울 강동구"],times:["평일 오전"],cur:0,max:15,active:false}
+    ],
+    notify:[]
+  };
+}
+function mkApp(id,no,g,area,status,pay,at,dis,pur,mob,tm,sn,sa,teacherNo,started){
+  return { id:id, no:no, guardian:g, phone:"010-****-**"+(1000+id).toString().slice(1,3), area:area,
+    status:status, pay:pay, createdAt:at, disease:dis, purpose:pur, mobility:mob, times:tm,
+    seniorName:sn, seniorAge:sa, teacherNo:teacherNo||null, assignedAt:teacherNo?at+2*3600000:null,
+    started:!!started, orderNo:"HR"+fmtOrder(at)+"-"+(100000+id).toString().slice(1),
+    paidAt: pay==="성공"||pay==="환불완료" ? at+12*60000 : null,
+    payConfirmedBy: status==="계약"||status==="배정" ? "대표" : null,
+    payConfirmedAt: status==="계약"||status==="배정" ? at+3*3600000 : null,
+    utm:{source:"meta",medium:"cpc",campaign:"senior_rehab_0901",landing:"A"},
+    memos: status==="신청"?[]:[{by:"대표",at:at+3*3600000,text:"통화 완료. 방문 희망 시간 확인함."}],
+    history: buildHist(status, at), isNew:false };
+}
+function buildHist(status, at){
+  var H=3600000, order=["신청","확인","배정","계약"], h=[], prev="신청";
+  if(status==="취소"){ return [{from:"신청",to:"취소",by:"대표",at:at+30*H}]; }
+  var idx = order.indexOf(status);
+  for(var i=1;i<=idx;i++){ h.push({from:order[i-1],to:order[i],by:"대표",at:at+(i*3)*H}); }
+  return h;
+}
+function fmtOrder(ts){ var d=new Date(ts); return ""+d.getFullYear()+p2(d.getMonth()+1)+p2(d.getDate()); }
+function p2(n){ return (n<10?"0":"")+n; }
+
+function save(){ if(memoryOnly) return; try{ localStorage.setItem(LS_KEY, JSON.stringify(S)); }catch(e){ memoryOnly=true; } }
+function load(){
+  try{ var raw = localStorage.getItem(LS_KEY); if(raw){ return JSON.parse(raw); } }
+  catch(e){ memoryOnly = true; }
+  return null;
+}
+function resetAll(){
+  S = seed(); try{ localStorage.removeItem(LS_KEY); }catch(e){}
+  save(); renderAll(); toast("처음 상태로 되돌렸습니다.");
+}
+
+/* ========== 유틸 ========== */
+function $(id){ return document.getElementById(id); }
+function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g, function(c){
+  return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+function won(n){ return n.toLocaleString("ko-KR"); }
+function fmtDT(ts){ var d=new Date(ts); return d.getFullYear()+"-"+p2(d.getMonth()+1)+"-"+p2(d.getDate())+" "+p2(d.getHours())+":"+p2(d.getMinutes()); }
+function fmtMD(ts){ var d=new Date(ts); return p2(d.getMonth()+1)+"-"+p2(d.getDate())+" "+p2(d.getHours())+":"+p2(d.getMinutes()); }
+function elapsed(ts){ var h=Math.floor((Date.now()-ts)/3600000); return h<1?"방금":(h<24?h+"시간":Math.floor(h/24)+"일"); }
+function isUnconfirmed(a){ return a.status==="신청" && (Date.now()-a.createdAt)/3600000 >= 2; }
+var toastTimer=null;
+function toast(msg){
+  var t=$("toast"); t.textContent=msg; t.hidden=false;
+  if(toastTimer) clearTimeout(toastTimer);
+  toastTimer=setTimeout(function(){ t.hidden=true; }, 3200);
+}
+function notify(to, channel, msg){
+  S.notify.unshift({to:to, ch:channel, msg:msg, at:Date.now()});
+  renderNotify(); save();
+}
+
+/* ========== 규칙 (models/비즈니스규칙목록.md) ========== */
+// MG1003: 전이 가능한 상태만. '확인'은 결제 성공 전제, '배정'은 유효 배정 존재
+function transitions(a){
+  if(a.status==="취소"||a.status==="계약") return [];
+  var out=[];
+  if(a.status==="신청"){ if(a.pay==="성공") out.push("확인"); }
+  if(a.status==="확인"){ if(a.teacherNo) out.push("배정"); }
+  if(a.status==="배정"){ out.push("계약"); }
+  out.push("취소");
+  return out;
+}
+// MG1005: 지역·시간·담당수는 사유 입력으로 배정 가능, 재직 아니면 후보에서 제외
+function evalTeacher(t, app){
+  var unmet=[];
+  if(t.areas.indexOf(app.area)<0) unmet.push("활동 지역에 고객의 거주 지역이 포함되지 않습니다");
+  var overlap = app.times.some(function(x){ return t.times.indexOf(x)>=0; });
+  if(app.times.length && !overlap) unmet.push("가용 시간이 희망 시간과 겹치지 않습니다");
+  if(t.cur >= t.max) unmet.push("담당 고객 수가 상한에 도달했습니다");
+  return unmet;
+}
+
+/* ========== 렌더 ========== */
+function renderAll(){ renderMode(); renderGuide(); renderCustomer(); renderAdmin(); renderNotify(); }
+function renderMode(){
+  $("mCust").setAttribute("aria-pressed", S.mode==="customer");
+  $("mAdm").setAttribute("aria-pressed", S.mode==="admin");
+  $("customerMode").hidden = S.mode!=="customer";
+  $("adminMode").hidden = S.mode!=="admin";
+  $("guideBtn").textContent = S.guide ? "가이드 끄기" : "가이드 켜기";
+}
+function setMode(m){ S.mode=m; save(); renderAll(); window.scrollTo(0,0); }
+function toggleGuide(){ S.guide=!S.guide; save(); renderMode(); renderGuide(); }
+
+var GUIDES = {
+  C1:["1/7","광고를 눌러 들어온 화면입니다. <b>상태 확인 시작</b>을 눌러보세요."],
+  C2:["2/7","부모님 상태를 입력하는 화면입니다. 실제로 골라보세요 — 가입은 아직 받지 않습니다."],
+  C2b:["3/7","연락처와 동의를 받는 2단계입니다. <b>건강정보 동의를 따로 받는 것</b>이 법적 요건입니다."],
+  C3:["4/7","입력 결과 안내입니다. 진단이 아니라 <b>상담 가능 여부</b>를 알려드립니다."],
+  C4:["5/7","여기서 처음 가입을 받습니다. 결제 직전이라 이탈이 가장 적습니다."],
+  C5:["6/7","단일 상품과 계약금을 안내합니다. 계약금은 정가의 10%입니다."],
+  C6:["7/7","결제창입니다. <b>테스트</b>이므로 실제 결제는 되지 않습니다. 성공·실패 모두 눌러보실 수 있습니다."],
+  C7:["완료","결제가 끝났습니다. 오른쪽에 <b>발송된 알림 3건</b>이 쌓였습니다. 이제 위에서 <b>대표님 화면</b>으로 바꿔보세요."]
+};
+var AGUIDES = {
+  list:["관리자","신청 목록입니다. 방금 넣으신 신청이 맨 위에 있습니다. 신청번호를 눌러 상세로 들어가 보세요."],
+  detail:["관리자","여기서 <b>건강정보 열람 → 결제 확인 → 상태 변경 → 선생님 배정</b> 순서로 처리합니다."],
+  assign:["관리자","조건이 맞지 않는 선생님을 골라보세요. 경고가 뜨고 <b>사유를 적어야</b> 배정됩니다."],
+  pay:["관리자","결제 건과 환불 요청을 처리하는 화면입니다."],
+  teacher:["관리자","선생님 명단입니다. <b>퇴직</b> 처리하면 배정 후보에서 사라집니다."],
+  opt:["옵션","아래는 <b>옵션 기능</b>입니다. 필수 범위 견적에 포함되지 않습니다."]
+};
+function renderGuide(){
+  var g = $("guideBar");
+  if(!S.guide){ g.hidden=true; return; }
+  g.hidden=false;
+  var d = S.mode==="customer" ? GUIDES[S.cScreen] : AGUIDES[S.aScreen];
+  if(!d){ g.hidden=true; return; }
+  g.innerHTML = '<span class="step">'+esc(d[0])+'</span><span>'+d[1]+'</span>';
+}
+function renderNotify(){
+  var b=$("notifyList");
+  if(!S.notify.length){ b.innerHTML='<div class="nempty">아직 발송된 알림이 없습니다.<br>고객 화면에서 신청·결제를 해보시면<br>여기에 쌓입니다.</div>'; return; }
+  b.innerHTML = S.notify.map(function(n){
+    return '<div class="nitem"><span class="to">'+esc(n.to)+'</span><span class="ch">'+esc(n.ch)+'</span>'+
+           '<div class="msg">'+esc(n.msg)+'</div></div>';
+  }).join("");
+}
+
+/* ========== 고객 화면 ========== */
+function goC(s){ S.cScreen=s; save(); renderGuide(); renderCustomer(); window.scrollTo(0,0); }
+function renderCustomer(){
+  var nav=$("cNav"), scr=$("cScr"), f=S.form;
+  var titles={C1:"시스루 방문재활",C2:"부모님 상태 확인",C2b:"연락처 입력",C3:"상담 안내",C4:"가입·로그인",C5:"상품 안내",C6:"결제",C7:"결제 완료"};
+  var cnt={C2:"1 / 2",C2b:"2 / 2"};
+  var backable = ["C2","C2b","C3","C4","C5","C6"].indexOf(S.cScreen)>=0;
+  nav.innerHTML = (backable?'<button class="back" onclick="cBack()">←</button>':'') +
+    '<span>'+esc(titles[S.cScreen]||"")+'</span>' + (cnt[S.cScreen]?'<span class="cnt">'+cnt[S.cScreen]+'</span>':'');
+
+  if(S.cScreen==="C1"){
+    scr.innerHTML =
+      '<h2 class="h-lg">부모님 재활,<br>집으로 찾아갑니다</h2>'+
+      '<p class="sub">병원 재활이 끝난 뒤가 더 중요합니다. 물리치료사·운동처방사 선생님이 집으로 방문해 12주 동안 함께합니다.</p>'+
+      '<div class="price"><div class="r"><span>주 2회 방문 · 12주 과정</span></div>'+
+      '<div class="r"><span>정가</span><b>'+won(PRODUCT.price)+'원</b></div></div>'+
+      '<p class="muted" style="margin-bottom:14px">먼저 부모님 상태를 확인해 드립니다. 1분이면 됩니다.</p>'+
+      '<button class="btn" onclick="goC(\'C2\')">부모님 상태 확인 시작</button>'+
+      '<p class="muted" style="margin-top:12px;text-align:center">이 화면은 광고 소재별로 다르게 만듭니다</p>';
+  }
+  else if(S.cScreen==="C2"){
+    scr.innerHTML =
+      chipField("어떤 질환이 있으신가요?","disease",CODE.disease,true,"복수 선택")+
+      chipField("재활의 목적은 무엇인가요?","purpose",CODE.purpose,true,"복수 선택")+
+      selField("거동은 어느 정도 가능하신가요?","mobility",CODE.mobility,true)+
+      selField("어디에 거주하시나요?","area",CODE.area,true)+
+      chipField("희망 방문 시간대","time",CODE.time,false,"선택 입력 · 배정에 참고합니다")+
+      '<div class="field"><label>부모님 정보 <span class="muted">(선택)</span></label><div class="row2">'+
+        '<input type="text" placeholder="성함" value="'+esc(f.seniorName)+'" oninput="setF(\'seniorName\',this.value)">'+
+        '<input type="number" placeholder="연세" value="'+esc(f.seniorAge)+'" oninput="setF(\'seniorAge\',this.value)"></div></div>'+
+      '<button class="btn" onclick="nextC2()" '+(f.disease.length&&f.purpose.length&&f.mobility&&f.area?'':'disabled')+'>다음</button>';
+  }
+  else if(S.cScreen==="C2b"){
+    var can = f.guardianName && f.phone && f.agreePrivacy && f.agreeHealth;
+    scr.innerHTML =
+      '<div class="field"><label>보호자 성함 <span class="req">*</span></label>'+
+        '<input type="text" placeholder="예: 김민수" value="'+esc(f.guardianName)+'" oninput="setF(\'guardianName\',this.value)"></div>'+
+      '<div class="field"><label>연락처 <span class="req">*</span></label>'+
+        '<input type="tel" placeholder="010-0000-0000" value="'+esc(f.phone)+'" oninput="setF(\'phone\',this.value)">'+
+        '<p class="muted" style="margin-top:6px">상담 결과를 문자로 안내드립니다</p></div>'+
+      '<div class="agree">'+
+        agreeRow("agreePrivacy","개인정보 수집·이용에 동의합니다",true)+
+        agreeRow("agreeHealth","건강정보 수집·이용에 동의합니다",true)+
+        agreeRow("agreeMkt","마케팅 정보 수신에 동의합니다",false)+
+      '</div>'+
+      '<p class="muted" style="margin:-6px 0 14px">건강정보 동의를 따로 받는 이유'+
+        whyBtn("질환·거동 정보는 법에서 특별히 보호하는 민감정보라, 일반 개인정보 동의와 분리해서 받아야 합니다. 저장할 때는 암호화하고, 나중에 누가 열어봤는지도 기록에 남습니다.")+'</p>'+
+      '<button class="btn" onclick="submitForm()" '+(can?'':'disabled')+'>결과 확인</button>';
+  }
+  else if(S.cScreen==="C3"){
+    var app = curApp();
+    var need = app.mobility==="전혀 불가";
+    scr.innerHTML =
+      '<div class="result-icon">'+(need?"☎":"✓")+'</div>'+
+      '<h2 class="h-md" style="text-align:center">'+(need?"상담이 필요합니다":"상담 가능합니다")+'</h2>'+
+      '<p class="sub" style="text-align:center">'+(need
+        ? "거동이 어려우신 경우 방문 방식을 먼저 상의해야 합니다. 담당자가 연락드려 확인해 드리겠습니다."
+        : "입력해 주신 내용으로 방문이 가능합니다. 담당자가 확인 후 연락드립니다.")+'</p>'+
+      '<p class="muted" style="text-align:center;margin-top:-8px">의학적 진단이 아니라 서비스 상담 가능 여부입니다'+
+        whyBtn("병원 밖 서비스는 '치료'가 아닌 '운동 지도'로 안내해야 안전하다는 정부 가이드라인이 있습니다. 그래서 진단처럼 읽히는 표현을 쓰지 않습니다.")+'</p>'+
+      '<div class="price"><div class="r"><span>접수 번호</span><b style="font-size:.95rem">'+esc(app.no)+'</b></div></div>'+
+      '<div class="price"><div class="r"><span>'+esc(PRODUCT.name)+'</span></div>'+
+        '<div class="r"><span>정가</span><span>'+won(PRODUCT.price)+'원</span></div>'+
+        '<div class="r"><span>계약금 (정가의 10%)</span><b>'+won(PRODUCT.deposit)+'원</b></div></div>'+
+      '<button class="btn" onclick="goC(\'C4\')">상품 확인하기</button>'+
+      '<button class="btn sec" style="margin-top:8px" onclick="reqConsult()">먼저 전화 상담 받기</button>'+
+      '<p class="muted" style="margin-top:10px;text-align:center">접수 내용은 문자로도 안내드립니다</p>';
+  }
+  else if(S.cScreen==="C4"){
+    scr.innerHTML =
+      '<h2 class="h-md">간편 가입</h2>'+
+      '<p class="sub">결제와 진행 상황 확인을 위해 계정을 만듭니다. 이미 가입하셨다면 자동으로 로그인됩니다.</p>'+
+      '<button class="btn" style="background:#FEE500;color:#191600" onclick="signup(\'카카오\')">카카오로 3초 가입</button>'+
+      '<button class="btn sec" style="margin-top:9px" onclick="signup(\'휴대폰\')">휴대폰 번호로 가입</button>'+
+      '<p class="muted" style="margin-top:12px">앞에서 넣으신 신청 내용이 이 계정에 연결됩니다'+
+        whyBtn("폼을 먼저 받고 가입은 결제 직전에 받습니다. 가입부터 요구하면 절반 가까이 이탈하기 때문입니다. 비회원으로 접수된 신청은 가입 시점에 계정과 연결됩니다.")+'</p>';
+  }
+  else if(S.cScreen==="C5"){
+    scr.innerHTML =
+      '<h2 class="h-md">'+esc(PRODUCT.name)+'</h2>'+
+      '<p class="sub">물리치료사·운동처방사 선생님이 댁으로 방문해 12주간 재활운동을 지도합니다.</p>'+
+      '<div class="price">'+
+        '<div class="r"><span>정가</span><span>'+won(PRODUCT.price)+'원</span></div>'+
+        '<div class="r"><span>지금 결제하실 계약금</span><b>'+won(PRODUCT.deposit)+'원</b></div>'+
+        '<div class="r"><span class="muted">잔금 '+won(PRODUCT.price-PRODUCT.deposit)+'원</span><span class="muted">첫 방문 때 별도 안내</span></div>'+
+      '</div>'+
+      '<p class="muted" style="margin-bottom:14px">계약금 결제 후 담당자가 확인해 선생님을 배정해 드립니다. 배정 전에는 언제든 전액 환불됩니다.</p>'+
+      '<button class="btn" onclick="goC(\'C6\')">계약금 '+won(PRODUCT.deposit)+'원 결제</button>';
+  }
+  else if(S.cScreen==="C6"){
+    scr.innerHTML =
+      '<div class="pay-mock"><span class="tag">테스트</span>'+
+        '<div style="font-weight:800;margin-bottom:4px">카드 결제</div>'+
+        '<div class="muted">실제 결제창이 아니라 흐름 확인용입니다. 카드번호를 넣지 마세요.</div></div>'+
+      '<div class="price"><div class="r"><span>결제 금액</span><b>'+won(PRODUCT.deposit)+'원</b></div>'+
+        '<div class="r"><span>주문번호</span><span class="muted">'+esc(curApp().orderNo)+'</span></div></div>'+
+      '<button class="btn" onclick="pay(true)">결제 승인 (성공)</button>'+
+      '<button class="btn sec" style="margin-top:9px" onclick="pay(false)">결제 실패해보기</button>'+
+      '<p class="muted" style="margin-top:12px">결제 완료는 카드사 통보를 받아야 확정됩니다'+
+        whyBtn("화면에서 '결제됐다'고 보이는 것만 믿지 않고, 결제 대행사가 서버로 보내주는 공식 통보를 받아야 확정 처리합니다. 새로고침하거나 통보가 두 번 와도 중복 결제로 기록되지 않게 막습니다.")+'</p>';
+  }
+  else if(S.cScreen==="C7"){
+    var a=curApp();
+    scr.innerHTML =
+      '<div class="result-icon">✓</div>'+
+      '<h2 class="h-md" style="text-align:center">결제가 완료되었습니다</h2>'+
+      '<p class="sub" style="text-align:center">담당자가 확인 후 연락드립니다. 접수 번호 '+esc(a.no)+'</p>'+
+      '<div class="sec-block"><h4>이때 발송되는 문자</h4>'+
+        '<div class="kv"><dt>고객</dt><dd>접수 확인 문자</dd><dt>관리자</dt><dd>신규 신청 알림</dd><dt>인근 선생님</dt><dd>수요 발생 알림(고객 정보 제외)</dd></div></div>'+
+      '<button class="btn" onclick="setMode(\'admin\')">대표님 화면에서 이 신청 처리해보기 →</button>'+
+      '<p class="muted" style="margin-top:10px;text-align:center">오른쪽 <b>발송된 알림</b>에 3건이 쌓였습니다</p>';
+  }
+  renderNotify();
+}
+function chipField(label,key,list,req,hint){
+  var sel=S.form[key];
+  return '<div class="field"><label>'+esc(label)+(req?' <span class="req">*</span>':'')+
+    (hint?' <span class="muted" style="font-weight:400">'+esc(hint)+'</span>':'')+'</label><div class="chips">'+
+    list.map(function(v){ return '<button type="button" class="chip" aria-pressed="'+(sel.indexOf(v)>=0)+
+      '" onclick="tgl(\''+key+'\',\''+v+'\')">'+esc(v)+'</button>'; }).join("")+'</div></div>';
+}
+function selField(label,key,list,req){
+  return '<div class="field"><label>'+esc(label)+(req?' <span class="req">*</span>':'')+'</label>'+
+    '<select onchange="setF(\''+key+'\',this.value)"><option value="">선택해 주세요</option>'+
+    list.map(function(v){ return '<option'+(S.form[key]===v?' selected':'')+'>'+esc(v)+'</option>'; }).join("")+'</select></div>';
+}
+function agreeRow(key,label,req){
+  return '<label><input type="checkbox" '+(S.form[key]?'checked':'')+' onchange="setF(\''+key+'\',this.checked)">'+
+    '<span>'+(req?'<span class="req">*</span> ':'')+esc(label)+'</span>'+
+    '<button type="button" class="view" onclick="showAgree()">보기</button></label>';
+}
+function whyBtn(text){ return '<button class="why" onclick="why('+JSON.stringify(text).replace(/"/g,"&quot;")+')" title="왜 이렇게 되나요?">i</button>'; }
+function why(t){ modal('<h3>왜 이렇게 되나요?</h3><p>'+esc(t)+'</p><div class="acts"><button class="btn" onclick="closeModal()">닫기</button></div>'); }
+function showAgree(){ modal('<h3>동의 전문 (예시)</h3><p class="muted">실제 서비스에서는 법률 검토를 거친 문안이 들어갑니다. 이 데모에서는 자리만 표시합니다.</p><p>수집 항목 · 이용 목적 · 보유 기간 · 동의 거부 권리와 불이익 안내가 들어갑니다.</p><div class="acts"><button class="btn" onclick="closeModal()">닫기</button></div>'); }
+function setF(k,v){ S.form[k]=v; save(); renderCustomer(); }
+function tgl(k,v){ var a=S.form[k], i=a.indexOf(v); if(i>=0) a.splice(i,1); else a.push(v); save(); renderCustomer(); }
+function cBack(){ var o={C2:"C1",C2b:"C2",C3:"C2b",C4:"C3",C5:"C4",C6:"C5"}; goC(o[S.cScreen]||"C1"); }
+function nextC2(){ goC("C2b"); }
+function curApp(){ return S.apps.filter(function(a){ return a.id===S.myAppId; })[0] || S.apps[0]; }
+
+function submitForm(){
+  var f=S.form, now=Date.now();
+  S.seq++;
+  var id = S.apps.length+1;
+  var no = "202609-"+("0000"+S.seq).slice(-5);
+  var a = { id:id, no:no, guardian:f.guardianName||"고객", phone:f.phone||"010-0000-0000", area:f.area,
+    status:"신청", pay:"대기", createdAt:now, disease:f.disease.slice(), purpose:f.purpose.slice(),
+    mobility:f.mobility, times:f.time.slice(), seniorName:f.seniorName||"-", seniorAge:f.seniorAge||"-",
+    teacherNo:null, assignedAt:null, started:false,
+    orderNo:"HR"+fmtOrder(now)+"-"+("00000"+S.seq).slice(-6), paidAt:null,
+    payConfirmedBy:null, payConfirmedAt:null,
+    utm:{source:"meta",medium:"cpc",campaign:"senior_rehab_0901",landing:"A"},
+    memos:[], history:[], isNew:true };
+  S.apps.push(a); S.myAppId=id; save();
+  goC("C3");
+  toast("신청이 접수되었습니다. 접수번호 "+no);
+}
+function reqConsult(){
+  modal('<h3>전화 상담을 신청했습니다</h3><p>담당자가 확인 후 연락드립니다. 상담 후에는 문자로 받으신 링크로 <b>같은 신청을 이어서</b> 결제하실 수 있습니다 — 처음부터 다시 입력하지 않습니다.</p>'+
+    '<div class="acts"><button class="btn sec" onclick="closeModal()">닫기</button><button class="btn" onclick="closeModal();goC(\'C4\')">상담받았다고 치고 계속</button></div>');
+  notify("관리자","알림톡","상담 요청이 접수되었습니다. 접수번호 "+curApp().no);
+}
+function signup(kind){
+  S.member={name:S.form.guardianName||"고객", kind:kind}; save();
+  toast(kind+" 가입이 완료되었습니다. 신청이 계정에 연결되었습니다.");
+  goC("C5");
+}
+function pay(ok){
+  var a=curApp();
+  if(!ok){
+    a.pay="실패"; save();
+    modal('<h3>결제에 실패했습니다</h3><p>카드사 한도 초과 등으로 결제가 되지 않은 상황입니다. 신청 자체는 남아 있어 대표님 화면에서 확인하고 다시 안내할 수 있습니다.</p>'+
+      '<div class="acts"><button class="btn sec" onclick="closeModal()">닫기</button><button class="btn" onclick="closeModal();pay(true)">다시 결제해보기</button></div>');
+    renderCustomer(); return;
+  }
+  a.pay="성공"; a.paidAt=Date.now(); save();
+  notify("고객("+a.guardian+"님)","SMS","[시스루] 접수가 완료되었습니다. 접수번호 "+a.no+" · 담당자가 확인 후 연락드립니다.");
+  notify("관리자","알림톡","신규 신청이 접수되었습니다. "+a.no+" / "+a.area+" / 계약금 결제 완료");
+  notify("인근 선생님","알림톡",a.area+" 지역에 신규 방문 요청이 있습니다. (고객 식별 정보는 포함하지 않습니다)");
+  goC("C7");
+}
+
+/* ========== 관리자 화면 ========== */
+function goAdmin(s){ S.aScreen=s; save(); renderGuide(); renderAdmin(); window.scrollTo(0,0); }
+function renderAdmin(){
+  ["list","pay","teacher","opt"].forEach(function(k){
+    var b=$("tab"+k.charAt(0).toUpperCase()+k.slice(1));
+    if(b) b.setAttribute("aria-pressed", S.aScreen===k || (k==="list"&&(S.aScreen==="detail"||S.aScreen==="assign")));
+  });
+  var el=$("aScr");
+  var hint='<div class="pc-hint">관리자 화면은 대표님이 <b>컴퓨터</b>에서 쓰시는 화면입니다. 휴대폰에서는 표를 옆으로 밀어 보실 수 있습니다.</div>';
+  if(S.aScreen==="list") el.innerHTML=hint+viewList();
+  else if(S.aScreen==="detail") el.innerHTML=viewDetail();
+  else if(S.aScreen==="assign") el.innerHTML=viewAssign();
+  else if(S.aScreen==="pay") el.innerHTML=viewPay();
+  else if(S.aScreen==="teacher") el.innerHTML=viewTeacher();
+  else if(S.aScreen==="opt") el.innerHTML=viewOpt();
+}
+function sortedApps(){
+  return S.apps.slice().sort(function(x,y){ return y.createdAt-x.createdAt; });
+}
+function viewList(){
+  var list=sortedApps(), f=S.filter.status;
+  var shown=list.filter(function(a){ return f==="전체"||a.status===f; });
+  var unc=list.filter(isUnconfirmed).length;
+  var rows=shown.map(function(a){
+    return '<tr class="'+(a.isNew?"isnew":"")+'">'+
+      '<td><button class="lnk" onclick="openDetail('+a.id+')">'+esc(a.no)+'</button>'+(a.isNew?'<span class="tag-new">NEW</span>':'')+'</td>'+
+      '<td>'+fmtMD(a.createdAt)+'</td>'+
+      '<td>'+esc(a.guardian)+'</td>'+
+      '<td>'+esc(a.area.replace("서울 ",""))+'</td>'+
+      '<td><span class="badge s-'+esc(a.status)+'">'+esc(a.status)+'</span></td>'+
+      '<td>'+esc(a.pay)+'</td>'+
+      '<td>'+elapsed(a.createdAt)+(isUnconfirmed(a)?'<span class="dot">●</span>':'')+'</td></tr>';
+  }).join("");
+  return '<div class="panel">'+
+    '<div class="head"><h3>신청 관리</h3>'+
+      '<div class="filters"><span class="muted">상태</span>'+
+      '<select onchange="setFilter(this.value)">'+["전체","신청","확인","배정","계약","취소"].map(function(v){
+        return '<option'+(f===v?' selected':'')+'>'+v+'</option>'; }).join("")+'</select></div></div>'+
+    '<div class="counts">전체 <b>'+list.length+'</b> 건 · 미확인 <span class="alert">'+unc+'</span> 건'+
+      whyBtn("접수 후 2시간이 지나도록 확인되지 않은 건은 ● 로 표시하고 관리자에게 알림톡을 보냅니다. 2시간 간격으로 최대 3회까지 다시 알려서, 들어온 문의를 놓치지 않게 합니다.")+'</div>'+
+    '<table><thead><tr><th>신청번호</th><th>신청일시</th><th>보호자</th><th>지역</th><th>상태</th><th>결제</th><th>경과</th></tr></thead>'+
+    '<tbody>'+(rows||'<tr><td colspan="7" style="text-align:center;color:var(--ink-3);padding:26px">해당 조건의 신청이 없습니다</td></tr>')+'</tbody></table></div>';
+}
+function setFilter(v){ S.filter.status=v; save(); renderAdmin(); }
+function openDetail(id){ S.detailId=id; var a=app(id); if(a) a.isNew=false; S.aScreen="detail"; save(); renderGuide(); renderAdmin(); window.scrollTo(0,0); }
+function app(id){ return S.apps.filter(function(a){ return a.id===id; })[0]; }
+
+function viewDetail(){
+  var a=app(S.detailId); if(!a) return "";
+  var rev=!!S.revealed[a.id];
+  var trs=transitions(a);
+  var canPayConfirm = a.pay==="성공" && !a.payConfirmedBy;
+  var t = a.teacherNo ? S.teachers.filter(function(x){return x.no===a.teacherNo;})[0] : null;
+  return '<div class="panel"><div class="head">'+
+      '<button class="mini" onclick="goAdmin(\'list\')">← 목록</button>'+
+      '<h3>'+esc(a.no)+'</h3><span class="badge s-'+esc(a.status)+'">'+esc(a.status)+'</span></div>'+
+    '<div class="body">'+
+    '<div class="sec-block"><h4>신청 정보</h4><dl class="kv">'+
+      '<dt>신청일시</dt><dd>'+fmtDT(a.createdAt)+'</dd>'+
+      '<dt>보호자</dt><dd>'+esc(a.guardian)+' · '+esc(a.phone)+'</dd>'+
+      '<dt>부모님</dt><dd>'+esc(a.seniorName)+' ('+esc(a.seniorAge)+'세)</dd>'+
+      '<dt>거주 지역</dt><dd>'+esc(a.area)+'</dd>'+
+      '<dt>서비스 개시</dt><dd>'+(a.started?"개시함 ("+(a.assignedAt?fmtDT(a.assignedAt):"-")+")":"아직")+
+        whyBtn("첫 방문을 마친 날을 기록해 둡니다. 중간에 그만두실 때 환불 기준이 되는 날짜라서, 나중에 다투지 않으려면 꼭 남겨야 합니다.")+'</dd></dl></div>'+
+
+    '<div class="sec-block"><h4>부모님 상태 정보 <span class="right">'+
+      (rev?'<span class="muted">열람함 · 기록 남음</span>':'<button class="mini" onclick="reveal('+a.id+')">상태 정보 열람</button>')+'</span></h4>'+
+      (rev
+        ? '<dl class="kv"><dt>질환</dt><dd>'+esc(a.disease.join(", "))+'</dd>'+
+          '<dt>재활 목적</dt><dd>'+esc(a.purpose.join(", "))+'</dd>'+
+          '<dt>거동</dt><dd>'+esc(a.mobility)+'</dd>'+
+          '<dt>희망 시간</dt><dd>'+esc(a.times.join(", ")||"미입력")+'</dd></dl>'
+        : '<div class="masked">건강정보는 가려져 있습니다. 열람하면 누가 언제 봤는지 기록이 남습니다.'+
+          whyBtn("질환·거동 같은 건강정보는 법에서 특별히 보호하는 민감정보입니다. 목록에는 아예 표시하지 않고, 상세에서도 열람 버튼을 눌러야 보이며 그 기록이 남습니다.")+'</div>')+'</div>'+
+
+    '<div class="sec-block"><h4>유입 정보</h4><dl class="kv">'+
+      '<dt>광고</dt><dd>'+esc(a.utm.source)+' / '+esc(a.utm.medium)+' / '+esc(a.utm.campaign)+' / 랜딩 '+esc(a.utm.landing)+'</dd></dl>'+
+      '<p class="muted" style="margin:7px 0 0">어느 광고에서 들어와 결제까지 갔는지 이 기록으로 확인합니다</p></div>'+
+
+    '<div class="sec-block"><h4>결제 정보 <span class="right">'+
+      '<button class="mini" onclick="confirmPay('+a.id+')" '+(canPayConfirm?'':'disabled')+'>결제 확인</button></span></h4><dl class="kv">'+
+      '<dt>주문번호</dt><dd>'+esc(a.orderNo)+'</dd>'+
+      '<dt>금액</dt><dd>'+won(PRODUCT.deposit)+' 원</dd>'+
+      '<dt>결제일시</dt><dd>'+(a.paidAt?fmtDT(a.paidAt):"-")+'</dd>'+
+      '<dt>상태</dt><dd>'+esc(a.pay)+'</dd>'+
+      '<dt>확인자</dt><dd>'+(a.payConfirmedBy?esc(a.payConfirmedBy)+" · "+fmtDT(a.payConfirmedAt):"미확인")+'</dd></dl>'+
+      '<p class="muted" style="margin:7px 0 0">결제 확인은 상태 변경과 별개로 기록됩니다'+
+        whyBtn("'결제를 확인했다'와 '신청 상태를 확인으로 바꿨다'는 다른 일이라 따로 기록합니다. 누가 언제 결제를 확인했는지가 남습니다.")+'</p></div>'+
+
+    '<div class="sec-block"><h4>배정 정보 <span class="right">'+
+      '<button class="mini pri" onclick="goAssign('+a.id+')" '+(a.status==="확인"||a.teacherNo?'':'disabled')+'>선생님 배정</button></span></h4>'+
+      (t?'<dl class="kv"><dt>담당 선생님</dt><dd>'+esc(t.name)+' ('+esc(t.qual)+')</dd><dt>배정일시</dt><dd>'+fmtDT(a.assignedAt)+'</dd></dl>'
+        :'<p class="muted" style="margin:0">배정된 선생님이 없습니다.'+(a.status!=="확인"?" 상태가 '확인'이어야 배정할 수 있습니다.":"")+'</p>')+'</div>'+
+
+    '<div class="sec-block"><h4>관리자 메모</h4>'+
+      '<textarea id="memoBox" rows="2" placeholder="통화 내용을 적어두시면 다음 응대가 쉬워집니다"></textarea>'+
+      '<div class="inline" style="margin-top:8px"><button class="mini" onclick="addMemo('+a.id+')">메모 저장</button></div>'+
+      (a.memos.length?'<div class="hist">'+a.memos.map(function(m){
+        return '<div><b>'+esc(m.by)+'</b> · '+fmtDT(m.at)+'<br>'+esc(m.text)+'</div>'; }).join("")+'</div>':'')+'</div>'+
+
+    '<div class="sec-block"><h4>상태 변경'+
+      whyBtn("단계는 신청 → 확인 → 배정 → 계약 순서로만 갑니다. 건너뛰거나 되돌릴 수 없고, 결제가 안 된 건은 '확인'으로 넘어가지 않습니다. 그래서 아래 목록에는 지금 갈 수 있는 상태만 나옵니다.")+'</h4>'+
+      (trs.length
+        ? '<div class="inline"><select id="toStatus">'+trs.map(function(s){ return '<option>'+esc(s)+'</option>'; }).join("")+'</select>'+
+          '<input type="text" id="stReason" placeholder="사유 (취소 시 필수)" style="flex:1;min-width:150px">'+
+          '<button class="mini pri" onclick="changeStatus('+a.id+')">상태 변경</button></div>'
+        : '<p class="muted" style="margin:0">'+(a.status==="계약"?"계약 완료 건은 더 이상 상태를 바꾸지 않습니다.":"종료된 신청입니다.")+'</p>')+
+      (a.pay!=="성공"&&a.status==="신청"?'<p class="muted" style="margin:8px 0 0">결제가 완료되지 않아 \'확인\'으로 넘길 수 없습니다.</p>':'')+
+      (a.history.length?'<div class="hist">'+a.history.map(function(h){
+        return '<div>'+esc(h.from)+' → <b>'+esc(h.to)+'</b> · '+esc(h.by)+' · '+fmtDT(h.at)+'</div>'; }).join("")+'</div>':'')+
+    '</div></div></div>';
+}
+function reveal(id){ S.revealed[id]=true; save(); renderAdmin(); toast("건강정보 열람 기록이 남았습니다. (열람자: 대표 · "+fmtDT(Date.now())+")"); }
+function confirmPay(id){ var a=app(id); a.payConfirmedBy="대표"; a.payConfirmedAt=Date.now(); save(); renderAdmin(); toast("결제 확인 처리했습니다."); }
+function addMemo(id){
+  var box=$("memoBox"), v=box?box.value.trim():"";
+  if(!v){ toast("메모 내용을 입력해 주세요."); return; }
+  app(id).memos.unshift({by:"대표",at:Date.now(),text:v}); save(); renderAdmin(); toast("메모를 저장했습니다.");
+}
+function changeStatus(id){
+  var a=app(id), to=$("toStatus").value, reason=($("stReason").value||"").trim();
+  if(to==="취소" && !reason){ toast("취소하실 때는 사유를 적어주세요."); return; }
+  a.history.unshift({from:a.status,to:to,by:"대표",at:Date.now()});
+  a.status=to;
+  if(to==="취소"){
+    if(a.teacherNo){ var t=S.teachers.filter(function(x){return x.no===a.teacherNo;})[0]; if(t&&t.cur>0) t.cur--;
+      notify("선생님("+t.name+"님)","알림톡","배정이 해제되었습니다. 신청 "+a.no); a.teacherNo=null; }
+    if(a.pay==="성공"){ a.pay="환불완료"; notify("고객("+a.guardian+"님)","SMS","[시스루] 환불이 완료되었습니다. "+won(PRODUCT.deposit)+"원"); }
+  }
+  if(to==="계약"){ a.started=true; }
+  save(); renderAdmin(); toast("상태를 '"+to+"'(으)로 변경했습니다.");
+}
+function goAssign(id){ S.detailId=id; S.aScreen="assign"; save(); renderGuide(); renderAdmin(); window.scrollTo(0,0); }
+
+function viewAssign(){
+  var a=app(S.detailId); if(!a) return "";
+  var cands=S.teachers.filter(function(t){ return t.active; });
+  var rows=cands.map(function(t){
+    var unmet=evalTeacher(t,a);
+    return '<tr><td><input type="radio" name="tsel" value="'+t.no+'" onchange="selTeacher('+t.no+')"></td>'+
+      '<td><b>'+esc(t.name)+'</b></td><td>'+esc(t.qual)+'</td>'+
+      '<td>'+esc(t.areas.map(function(x){return x.replace("서울 ","");}).join(", "))+'</td>'+
+      '<td>'+esc(t.times.join(", "))+'</td>'+
+      '<td>'+t.cur+' / '+t.max+'</td>'+
+      '<td>'+(unmet.length?'<span class="no">'+esc(unmet.length===1?shortUnmet(unmet[0]):unmet.length+"개 미충족")+'</span>':'<span class="ok">가능</span>')+'</td></tr>';
+  }).join("");
+  var t = a.teacherNo ? S.teachers.filter(function(x){return x.no===a.teacherNo;})[0] : null;
+  return '<div class="panel"><div class="head">'+
+      '<button class="mini" onclick="openDetail('+a.id+')">← 상세</button><h3>선생님 배정 · '+esc(a.no)+'</h3></div>'+
+    '<div class="body">'+
+    '<div class="sec-block"><h4>배정 판단 정보</h4><dl class="kv">'+
+      '<dt>보호자</dt><dd>'+esc(a.guardian)+'</dd>'+
+      '<dt>거주 지역</dt><dd>'+esc(a.area)+'</dd>'+
+      '<dt>질환 · 거동</dt><dd>'+esc(a.disease.join(", "))+' · '+esc(a.mobility)+'</dd>'+
+      '<dt>희망 시간</dt><dd>'+esc(a.times.join(", ")||"미입력 (상담에서 확인)")+'</dd></dl>'+
+      '<p class="muted" style="margin:7px 0 0">이 화면은 배정 판단에 필요한 범위만 보여주며, 들어온 것 자체가 열람 기록으로 남습니다</p></div>'+
+    (t?'<div class="sec-block"><h4>현재 배정</h4><dl class="kv"><dt>담당</dt><dd>'+esc(t.name)+'</dd><dt>배정일시</dt><dd>'+fmtDT(a.assignedAt)+'</dd></dl></div>':'')+
+    '<div class="sec-block"><h4>선생님 조회'+
+      whyBtn("지역·시간·담당 고객 수가 맞지 않아도 사유를 적으면 배정할 수 있습니다. 초기에는 선생님이 적어 조건을 다 맞추기 어렵기 때문입니다. 다만 퇴직하신 분은 목록에 아예 나오지 않습니다.")+'</h4>'+
+      '<table><thead><tr><th>선택</th><th>성명</th><th>자격</th><th>활동 지역</th><th>가용 시간</th><th>담당/상한</th><th>배정 가능</th></tr></thead><tbody>'+rows+'</tbody></table>'+
+      '<p class="muted" style="margin:9px 0 0">퇴직 처리된 선생님은 목록에 표시되지 않습니다 (현재 1명 제외됨)</p></div>'+
+    '<div class="inline"><button class="mini pri" onclick="doAssign('+a.id+')">'+(t?"배정 변경":"배정")+'</button>'+
+      '<span class="muted">'+(a.status==="확인"||t?"":"상태가 '확인'이어야 배정됩니다")+'</span></div>'+
+    '</div></div>';
+}
+function shortUnmet(s){
+  if(s.indexOf("지역")>=0) return "지역 불일치";
+  if(s.indexOf("시간")>=0) return "시간 불일치";
+  return "담당수 초과";
+}
+var pickedTeacher=null;
+function selTeacher(no){ pickedTeacher=no; }
+function doAssign(id){
+  var a=app(id);
+  if(!pickedTeacher){ toast("배정할 선생님을 선택해 주세요."); return; }
+  if(a.status!=="확인" && !a.teacherNo){ toast("상태가 '확인'이어야 배정할 수 있습니다."); return; }
+  var t=S.teachers.filter(function(x){return x.no===pickedTeacher;})[0];
+  var unmet=evalTeacher(t,a);
+  if(unmet.length){
+    modal('<h3>배정 조건 확인</h3><p><b>'+esc(t.name)+'</b> 선생님은 아래 조건을 충족하지 않습니다.</p>'+
+      '<ul class="unmet">'+unmet.map(function(u){ return '<li>· '+esc(u)+'</li>'; }).join("")+'</ul>'+
+      '<p class="muted">그래도 배정하시려면 사유를 적어주세요. 기록으로 남습니다.</p>'+
+      '<input type="text" id="assignReason" placeholder="예: 고객이 이 선생님을 요청함" style="width:100%;margin-top:6px">'+
+      '<div class="acts"><button class="btn sec" onclick="closeModal()">취소</button>'+
+      '<button class="btn warn" onclick="finishAssign('+id+','+t.no+',true)">배정 진행</button></div>');
+    return;
+  }
+  finishAssign(id,t.no,false);
+}
+function finishAssign(id,tno,needReason){
+  var a=app(id), t=S.teachers.filter(function(x){return x.no===tno;})[0];
+  if(needReason){
+    var r=$("assignReason"); var v=r?r.value.trim():"";
+    if(!v){ toast("배정 사유를 적어주세요."); return; }
+    a.memos.unshift({by:"대표",at:Date.now(),text:"조건 미충족 배정 사유: "+v});
+    closeModal();
+  }
+  if(a.teacherNo){
+    var old=S.teachers.filter(function(x){return x.no===a.teacherNo;})[0];
+    if(old&&old.cur>0) old.cur--;
+    notify("선생님("+old.name+"님)","알림톡","배정이 해제되었습니다. 신청 "+a.no);
+  }
+  a.teacherNo=t.no; a.assignedAt=Date.now(); t.cur++;
+  if(a.status==="확인"){ a.history.unshift({from:"확인",to:"배정",by:"대표",at:Date.now()}); a.status="배정"; }
+  save();
+  notify("선생님("+t.name+"님)","알림톡","새 고객이 배정되었습니다. "+a.area+" · 신청 "+a.no);
+  notify("고객("+a.guardian+"님)","SMS","[시스루] 담당 선생님이 배정되었습니다. "+t.name+" 선생님이 곧 연락드립니다.");
+  S.aScreen="detail"; renderGuide(); renderAdmin(); toast(t.name+" 선생님을 배정했습니다.");
+}
+
+function viewPay(){
+  var rows=sortedApps().filter(function(a){ return a.pay!=="대기"; }).map(function(a){
+    var refundable = a.pay==="성공";
+    return '<tr><td>'+esc(a.orderNo)+'</td><td>'+esc(a.guardian)+'</td><td>'+won(PRODUCT.deposit)+'</td>'+
+      '<td>'+(a.paidAt?fmtDT(a.paidAt):"-")+'</td><td>'+esc(a.pay)+'</td>'+
+      '<td>'+(a.payConfirmedBy?esc(a.payConfirmedBy):"미확인")+'</td>'+
+      '<td>'+(refundable?'<button class="mini" onclick="askRefund('+a.id+')">환불 처리</button>':'<span class="muted">-</span>')+'</td></tr>';
+  }).join("");
+  return '<div class="panel"><div class="head"><h3>결제·환불 관리</h3></div>'+
+    '<table><thead><tr><th>주문번호</th><th>보호자</th><th>금액</th><th>결제일시</th><th>상태</th><th>확인자</th><th>처리</th></tr></thead><tbody>'+rows+'</tbody></table>'+
+    '<div class="body"><p class="muted" style="margin:0">환불은 자동으로 처리하지 않고 대표님이 사유를 확인한 뒤 실행합니다.'+
+      whyBtn("결제일로부터 7일 이내이고 서비스가 시작되지 않았으면 전액 환불합니다. 이미 방문이 시작된 뒤에는 진행한 만큼을 빼고 환불하는데, 그 금액은 대표님이 정해서 입력하십니다.")+'</p></div></div>';
+}
+function askRefund(id){
+  var a=app(id);
+  var days = a.paidAt ? Math.floor((Date.now()-a.paidAt)/86400000) : 0;
+  var full = days<=7 && !a.started;
+  modal('<h3>환불 처리</h3>'+
+    '<p>주문 '+esc(a.orderNo)+' · '+esc(a.guardian)+'님 · '+won(PRODUCT.deposit)+'원</p>'+
+    '<p class="muted">결제 후 '+days+'일 경과 · 서비스 '+(a.started?"개시함":"미개시")+'</p>'+
+    '<div class="unmet" style="background:var(--brand-soft);color:var(--brand-2)">'+
+      (full?'전액 환불 대상입니다 (7일 이내 · 서비스 미개시)':'서비스가 시작되었거나 7일이 지나 <b>공제 금액을 입력</b>해야 합니다')+'</div>'+
+    (full?'':'<input type="text" id="deduct" placeholder="공제 금액 (원)" style="width:100%">')+
+    '<div class="acts"><button class="btn sec" onclick="closeModal()">닫기</button>'+
+    '<button class="btn" onclick="doRefund('+id+','+full+')">환불 실행</button></div>');
+}
+function doRefund(id, full){
+  var a=app(id);
+  a.pay="환불완료";
+  a.history.unshift({from:a.status,to:"취소",by:"대표",at:Date.now()});
+  a.status="취소";
+  if(a.teacherNo){ var t=S.teachers.filter(function(x){return x.no===a.teacherNo;})[0];
+    if(t&&t.cur>0) t.cur--; notify("선생님("+t.name+"님)","알림톡","배정이 해제되었습니다. 신청 "+a.no); a.teacherNo=null; }
+  save(); closeModal(); renderAdmin();
+  notify("고객("+a.guardian+"님)","SMS","[시스루] 환불이 완료되었습니다. 문의는 고객센터로 연락 주세요.");
+  toast("환불 처리했습니다. 신청은 '취소' 상태가 됩니다.");
+}
+function viewTeacher(){
+  var rows=S.teachers.map(function(t){
+    return '<tr><td><b>'+esc(t.name)+'</b></td><td>'+esc(t.qual)+'</td>'+
+      '<td>'+esc(t.areas.map(function(x){return x.replace("서울 ","");}).join(", "))+'</td>'+
+      '<td>'+esc(t.times.join(", "))+'</td><td>'+t.cur+' / '+t.max+'</td>'+
+      '<td>'+(t.active?'<span class="ok">재직</span>':'<span class="muted">퇴직</span>')+'</td>'+
+      '<td><button class="mini" onclick="toggleTeacher('+t.no+')">'+(t.active?"퇴직 처리":"재직 복귀")+'</button></td></tr>';
+  }).join("");
+  return '<div class="panel"><div class="head"><h3>선생님 관리</h3></div>'+
+    '<table><thead><tr><th>성명</th><th>자격</th><th>활동 지역</th><th>가용 시간</th><th>담당/상한</th><th>재직</th><th>처리</th></tr></thead><tbody>'+rows+'</tbody></table>'+
+    '<div class="body"><p class="muted" style="margin:0">퇴직 처리해도 지난 배정 기록은 남습니다. 퇴직하신 분은 배정 화면 후보에서 사라집니다 — 직접 바꿔보시고 배정 화면을 확인해 보세요.</p></div></div>';
+}
+function toggleTeacher(no){
+  var t=S.teachers.filter(function(x){return x.no===no;})[0];
+  t.active=!t.active; save(); renderAdmin();
+  toast(t.name+" 선생님을 "+(t.active?"재직":"퇴직")+" 처리했습니다.");
+}
+function viewOpt(){
+  var a=S.apps.filter(function(x){return x.status==="배정"||x.status==="계약";})[0]||S.apps[0];
+  return '<div class="optbar">아래 세 화면은 <b>옵션 기능</b>입니다 — 필수 범위 견적(2,200만원)에 포함되지 않으며 별도 견적입니다.</div>'+
+    '<div class="panel" style="margin-bottom:14px"><div class="head"><h3>가족 대시보드</h3><span class="badge opt-badge">옵션 · 100만~150만원</span></div>'+
+    '<div class="body"><p class="muted" style="margin-top:0">결제하신 자녀분이 진행 상황을 확인하는 화면입니다.</p>'+
+      '<dl class="kv"><dt>담당 선생님</dt><dd>박지훈 (물리치료사)</dd><dt>진행</dt><dd>12주 중 <b>3주차</b> · 남은 회차 18회</dd>'+
+      '<dt>다음 방문</dt><dd>9월 12일 (목) 오전 10시</dd><dt>지금 해지하시면</dt><dd>예상 환불액 <b>1,344,000원</b> <span class="muted">(이용 6회 공제 · 위약금 별도 안내)</span></dd></dl>'+
+      '<p class="muted" style="margin-bottom:0">남은 회차와 예상 환불액을 미리 보여드리면 환불 문의와 분쟁이 크게 줄어듭니다.</p></div></div>'+
+
+    '<div class="panel" style="margin-bottom:14px"><div class="head"><h3>방문 활동 보고</h3><span class="badge opt-badge">옵션 · 별도 산정</span></div>'+
+    '<div class="body"><p class="muted" style="margin-top:0">선생님이 방문 때마다 남기고, 자녀분이 확인합니다.</p>'+
+      '<div class="sec-block" style="margin-bottom:0"><h4>9월 5일 · 6회차 · 박지훈 선생님</h4>'+
+      '<dl class="kv"><dt>목표</dt><dd>보행 지구력 향상</dd><dt>수행</dt><dd>보행 훈련 20분, 하지 근력 15분</dd>'+
+      '<dt>수행 정도</dt><dd>계획의 90%</dd><dt>관찰</dt><dd>지난주보다 5분 더 걸으심. 왼쪽 무릎 통증 호소 없음</dd></dl>'+
+      '<p class="muted" style="margin-bottom:0">촬영 동의를 받은 사진·영상도 함께 올릴 수 있습니다</p></div></div></div>'+
+
+    '<div class="panel"><div class="head"><h3>7일 수행체크</h3><span class="badge opt-badge">옵션 · 100만~150만원</span></div>'+
+    '<div class="body"><p class="muted" style="margin-top:0">선생님이 오지 않는 날의 자가운동을 기록합니다. 기록은 선생님·가족이 남깁니다.</p>'+
+      '<div class="inline">'+["월","화","수","목","금","토","일"].map(function(d,i){
+        return '<span class="badge '+(i<4?"s-배정":"s-신청")+'">'+d+(i<4?" ✓":" ·")+'</span>'; }).join("")+'</div>'+
+      '<p class="muted" style="margin-bottom:0">방문 회차 기록은 환불 계산의 근거가 되기 때문에, 이 기능은 필수 범위로 올리기를 권해드립니다.</p></div></div>';
+}
+
+/* ========== 모달 ========== */
+function modal(html){ $("modalRoot").innerHTML='<div class="mask" onclick="if(event.target===this)closeModal()"><div class="modal">'+html+'</div></div>'; }
+function closeModal(){ $("modalRoot").innerHTML=""; }
+
+/* ========== 시작 ========== */
+(function init(){
+  var loaded = load();
+  S = loaded || seed();
+  if(!S.apps || !S.teachers){ S = seed(); }
+  renderAll();
+  if(!S.seenIntro){
+    S.seenIntro=true; save();
+    modal('<h3>계약 1주차에 드릴 화면 시안입니다</h3>'+
+      '<p>제안서에 적은 <b>"1주차에 클릭 가능한 화면 시안"</b>이 어떤 것인지 미리 보시라고 준비했습니다.</p>'+
+      '<p><b>이렇게 보시면 됩니다.</b> 고객 화면에서 직접 신청하고 결제해 보신 뒤, 위쪽에서 <b>대표님 화면</b>으로 바꿔보세요. 방금 넣으신 신청이 목록에 그대로 올라와 있고, 상태를 바꾸고 선생님을 배정할 수 있습니다.</p>'+
+      '<p class="muted">실제 결제나 문자 발송은 일어나지 않습니다. 실제 개발에서는 이 화면 뒤에 서버·결제 연동·보안이 붙습니다.</p>'+
+      '<div class="acts"><button class="btn" onclick="closeModal()">시작하기</button></div>');
+  }
+  if(memoryOnly){ toast("이 브라우저에서는 저장이 제한되어, 새로고침하면 처음부터 시작됩니다."); }
+})();
+</script>
+</body>
+</html>
